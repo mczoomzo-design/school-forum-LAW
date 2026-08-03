@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>เข้าสู่ระบบ — EduForum</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="assets/js/theme.js"></script>
+<script src="assets/js/config.js"></script>
+<style>
+  body { font-family: 'Sarabun', 'Be Vietnam Pro', sans-serif; }
+  :focus-visible { outline: 2px solid #006a6a; outline-offset: 2px; }
+</style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col">
+
+<div id="site-header"></div>
+
+<main class="flex-1 flex items-center justify-center px-5 py-xl">
+  <div class="w-full max-w-md bg-surface-container-lowest border border-outline-variant rounded p-lg">
+
+    <div class="flex mb-lg border-b border-outline-variant">
+      <button id="tab-login" class="flex-1 pb-3 text-label-md border-b-2 border-secondary text-primary font-semibold">เข้าสู่ระบบ</button>
+      <button id="tab-register" class="flex-1 pb-3 text-label-md border-b-2 border-transparent text-on-surface-variant">สมัครสมาชิก</button>
+    </div>
+
+    <!-- เข้าสู่ระบบ -->
+    <div id="form-login" class="flex flex-col gap-md">
+      <div>
+        <label for="lg-user" class="block text-label-md text-on-surface-variant mb-1">ชื่อผู้ใช้</label>
+        <input id="lg-user" autocomplete="username" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
+      </div>
+      <div>
+        <label for="lg-pass" class="block text-label-md text-on-surface-variant mb-1">รหัสผ่าน</label>
+        <input id="lg-pass" type="password" autocomplete="current-password" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
+      </div>
+      <button id="btn-login" class="h-12 rounded-lg bg-primary-container text-on-primary text-label-md hover:opacity-90 disabled:opacity-50">เข้าสู่ระบบ</button>
+      <a href="index.html" class="text-center text-label-md text-secondary hover:underline">ใช้งานแบบผู้เยี่ยมชม</a>
+    </div>
+
+    <!-- สมัครสมาชิก -->
+    <div id="form-register" class="hidden flex-col gap-md">
+      <div>
+        <label for="rg-user" class="block text-label-md text-on-surface-variant mb-1">ชื่อผู้ใช้ (a-z 0-9 . _ ยาว 4-20 ตัว)</label>
+        <input id="rg-user" autocomplete="username" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
+      </div>
+      <div>
+        <label for="rg-name" class="block text-label-md text-on-surface-variant mb-1">ชื่อที่จะแสดง</label>
+        <input id="rg-name" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
+      </div>
+      <div>
+        <label for="rg-role" class="block text-label-md text-on-surface-variant mb-1">สถานะ</label>
+        <select id="rg-role" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
+          <option value="student">นักเรียน</option>
+          <option value="teacher">ครู / บุคลากร</option>
+        </select>
+      </div>
+      <div>
+        <label for="rg-pass" class="block text-label-md text-on-surface-variant mb-1">รหัสผ่าน (อย่างน้อย 6 ตัว)</label>
+        <input id="rg-pass" type="password" autocomplete="new-password" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
+      </div>
+      <button id="btn-register" class="h-12 rounded-lg bg-secondary text-on-secondary text-label-md hover:opacity-90 disabled:opacity-50">สมัครสมาชิก</button>
+    </div>
+
+  </div>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="assets/js/app.js"></script>
+<script>
+(function () {
+  EF.renderHeader(''); EF.renderFooter();
+  var next = EF.param('next') || 'index.html';
+
+  var tabL = document.getElementById('tab-login'), tabR = document.getElementById('tab-register');
+  var fL = document.getElementById('form-login'), fR = document.getElementById('form-register');
+
+  function show(which) {
+    var on = 'flex-1 pb-3 text-label-md border-b-2 border-secondary text-primary font-semibold';
+    var off = 'flex-1 pb-3 text-label-md border-b-2 border-transparent text-on-surface-variant';
+    tabL.className = which === 'login' ? on : off;
+    tabR.className = which === 'register' ? on : off;
+    fL.className = which === 'login' ? 'flex flex-col gap-md' : 'hidden';
+    fR.className = which === 'register' ? 'flex flex-col gap-md' : 'hidden';
+  }
+  tabL.addEventListener('click', function () { show('login'); });
+  tabR.addEventListener('click', function () { show('register'); });
+
+  function done(r, btn, label) {
+    btn.disabled = false; btn.textContent = label;
+    if (!r.ok) return EF.toast(r.error, 'error');
+    EF.Auth.save(r.token, r.user);
+    location.href = r.user.role === 'admin' ? 'admin.html' : next;
+  }
+
+  var bL = document.getElementById('btn-login');
+  bL.addEventListener('click', function () {
+    var u = document.getElementById('lg-user').value.trim();
+    var p = document.getElementById('lg-pass').value;
+    if (!u || !p) return EF.toast('กรอกชื่อผู้ใช้และรหัสผ่าน', 'warn');
+    bL.disabled = true; bL.textContent = 'กำลังตรวจสอบ…';
+    EF.api.post('login', { username: u, password: p })
+      .then(function (r) { done(r, bL, 'เข้าสู่ระบบ'); })
+      .catch(function (e) { bL.disabled = false; bL.textContent = 'เข้าสู่ระบบ'; EF.toast(e.message, 'error'); });
+  });
+
+  var bR = document.getElementById('btn-register');
+  bR.addEventListener('click', function () {
+    var u = document.getElementById('rg-user').value.trim();
+    var p = document.getElementById('rg-pass').value;
+    if (!u || !p) return EF.toast('กรอกข้อมูลให้ครบ', 'warn');
+    bR.disabled = true; bR.textContent = 'กำลังสมัคร…';
+    EF.api.post('register', {
+      username: u, password: p,
+      displayName: document.getElementById('rg-name').value.trim(),
+      role: document.getElementById('rg-role').value
+    }).then(function (r) { done(r, bR, 'สมัครสมาชิก'); })
+      .catch(function (e) { bR.disabled = false; bR.textContent = 'สมัครสมาชิก'; EF.toast(e.message, 'error'); });
+  });
+
+  // กด Enter เพื่อส่ง
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    if (fL.className.indexOf('hidden') === -1) bL.click(); else bR.click();
+  });
+})();
+</script>
+</body>
+</html>

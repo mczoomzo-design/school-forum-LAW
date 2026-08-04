@@ -1,5 +1,6 @@
 /* ==========================================================
-   EduForum — API client + ตัวช่วยที่ใช้ร่วมกันทุกหน้า
+   EduForum — แกนกลางฝั่งเบราว์เซอร์
+   API, สถานะผู้ใช้, รูปโปรไฟล์, ตัวช่วยแสดงผล, ร่างอัตโนมัติ
    ========================================================== */
 (function () {
   'use strict';
@@ -7,7 +8,7 @@
   var CFG = window.EDUFORUM_CONFIG || {};
   var API = CFG.API_URL || '';
 
-  // ---------- localStorage ----------
+  // ---------- ที่เก็บข้อมูลในเครื่อง ----------
   var Store = {
     get: function (k, d) {
       try { var v = localStorage.getItem('eduforum:' + k); return v === null ? d : JSON.parse(v); }
@@ -17,7 +18,7 @@
     del: function (k) { try { localStorage.removeItem('eduforum:' + k); } catch (e) {} }
   };
 
-  // กุญแจประจำเครื่อง ใช้กันกดถูกใจซ้ำ/นับวิวซ้ำ ของผู้เยี่ยมชม
+  // กุญแจประจำเครื่อง กันกดถูกใจซ้ำและนับวิวซ้ำของผู้เยี่ยมชม
   var voterKey = Store.get('voterKey', null);
   if (!voterKey) {
     voterKey = 'v' + Math.random().toString(36).slice(2) + Date.now().toString(36);
@@ -38,18 +39,16 @@
     }
   }
 
-  /** อ่านข้อมูล (GET) */
   function get(action, params) {
     assertConfigured();
     var p = params || {};
     p.action = action;
     p.voterKey = voterKey;
     if (Store.get('token')) p.token = Store.get('token');
-    return fetch(API + '?' + qs(p), { method: 'GET' }).then(readJson);
+    return fetch(API + '?' + qs(p)).then(readJson);
   }
 
-  /** เขียนข้อมูล (POST)
-   *  ใช้ text/plain เพื่อเลี่ยง CORS preflight ที่ Apps Script ตอบไม่ได้ */
+  /** POST ใช้ text/plain เพื่อเลี่ยง CORS preflight ที่ Apps Script ตอบไม่ได้ */
   function post(action, params) {
     assertConfigured();
     var p = params || {};
@@ -66,40 +65,44 @@
   function readJson(res) {
     return res.text().then(function (txt) {
       try { return JSON.parse(txt); }
-      catch (e) { throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ ตรวจสอบว่าเผยแพร่ Web App เป็น "Anyone" แล้ว'); }
+      catch (e) { throw new Error('เซิร์ฟเวอร์ตอบกลับผิดรูปแบบ ตรวจว่าเผยแพร่ Web App เป็น Anyone แล้ว'); }
     });
   }
 
   // ---------- สถานะผู้ใช้ ----------
   var Auth = {
-    user: Store.get('user', null),
-    token: Store.get('token', null),
+    get user() { return Store.get('user', null); },
+    get token() { return Store.get('token', null); },
     isLoggedIn: function () { return !!Store.get('token'); },
     isAdmin: function () { var u = Store.get('user'); return !!u && u.role === 'admin'; },
-    save: function (token, user) { Store.set('token', token); Store.set('user', user); Auth.token = token; Auth.user = user; },
-    clear: function () { Store.del('token'); Store.del('user'); Auth.token = null; Auth.user = null; },
+    save: function (token, user) { Store.set('token', token); Store.set('user', user); },
+    patch: function (user) { Store.set('user', user); },
+    clear: function () { Store.del('token'); Store.del('user'); },
     logout: function () {
       var t = Store.get('token');
       Auth.clear();
       if (t) post('logout', { token: t }).catch(function () {});
       location.href = 'index.html';
+    },
+    requireLogin: function (next) {
+      if (Auth.isLoggedIn()) return true;
+      location.href = 'login.html?next=' + encodeURIComponent(next || location.pathname.split('/').pop());
+      return false;
     }
   };
 
   // ---------- ตัวช่วยแสดงผล ----------
   function esc(s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  /** แปลงข้อความธรรมดาเป็น HTML ปลอดภัย: ขึ้นบรรทัดใหม่ + ลิงก์ */
+  /** ข้อความจากเซิร์ฟเวอร์ผ่านการ escape มาแล้ว ที่นี่แปลงแค่ลิงก์กับการขึ้นบรรทัด */
   function textToHtml(s) {
-    var out = String(s == null ? '' : s);
-    // ข้อความจากเซิร์ฟเวอร์ถูก escape ไว้แล้ว จึงแปลงเฉพาะลิงก์กับบรรทัด
-    out = out.replace(/(https?:\/\/[^\s<]+)/g, function (m) {
-      return '<a href="' + m + '" target="_blank" rel="noopener noreferrer" class="text-secondary underline break-all">' + m + '</a>';
-    });
-    return out.replace(/\n/g, '<br>');
+    return String(s == null ? '' : s)
+      .replace(/(https?:\/\/[^\s<]+)/g, function (m) {
+        return '<a href="' + m + '" target="_blank" rel="noopener noreferrer" class="text-secondary underline break-all">' + m + '</a>';
+      })
+      .replace(/\n/g, '<br>');
   }
 
   function timeAgo(iso) {
@@ -113,100 +116,109 @@
     return d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  function initials(name) {
-    var n = String(name || '?').trim();
-    return n.slice(0, 1).toUpperCase();
+  function fullDate(iso) {
+    var d = new Date(iso);
+    return isNaN(d) ? '-' : d.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' });
   }
 
-  function avatarHtml(name, isGuest, size) {
-    var cls = size === 'lg' ? 'size-12 text-body-lg' : 'size-9 text-label-md';
-    var bg = isGuest ? 'bg-surface-container-highest text-on-surface-variant' : 'bg-primary-container text-on-primary';
-    return '<div class="' + cls + ' ' + bg + ' rounded-full flex items-center justify-center font-display font-bold shrink-0">' + esc(initials(name)) + '</div>';
+  // ---------- รูปโปรไฟล์ ----------
+  // เก็บได้ 3 แบบ: '' (ตัวอักษรย่อ), 'p:N' (ชุดสำเร็จรูป), 'data:image/...' (รูปที่ผู้ใช้อัปเอง)
+  var PRESETS = [
+    ['#002366', '#4a6fd4'], ['#006a6a', '#3fb3b3'], ['#7c3aed', '#a97bf5'],
+    ['#b45309', '#e39237'], ['#0f766e', '#4bb5ab'], ['#9d174d', '#d6608f'],
+    ['#1e40af', '#5b82e8'], ['#166534', '#4fa96e'], ['#7e22ce', '#ab5be0'],
+    ['#a16207', '#d0a03c'], ['#0e7490', '#43a8c2'], ['#be123c', '#e4587a']
+  ];
+
+  function presetCount() { return PRESETS.length; }
+
+  function presetGradient(i) {
+    var p = PRESETS[Number(i) % PRESETS.length] || PRESETS[0];
+    return 'linear-gradient(135deg,' + p[0] + ',' + p[1] + ')';
+  }
+
+  function initial(name) { return String(name || '?').trim().slice(0, 1).toUpperCase(); }
+
+  /**
+   * สร้าง HTML รูปโปรไฟล์
+   * size: 'sm' 32px | 'md' 40px | 'lg' 56px | 'xl' 96px
+   */
+  function avatar(user, size, opts) {
+    var o = opts || {};
+    var px = { sm: 32, md: 40, lg: 56, xl: 96 }[size || 'md'];
+    var font = { sm: 13, md: 15, lg: 20, xl: 34 }[size || 'md'];
+    var name = user && (user.displayName || user.authorName || user.name) || '?';
+    var src = user && (user.avatar || user.authorAvatar) || '';
+    var isGuest = user && (user.isGuest === true);
+    var ring = (user && (user.role === 'admin' || user.role === 'teacher' ||
+                         user.authorRole === 'admin' || user.authorRole === 'teacher'))
+      ? 'box-shadow:0 0 0 2px #002366;' : '';
+
+    var style = 'width:' + px + 'px;height:' + px + 'px;font-size:' + font + 'px;' + ring;
+    var cls = 'inline-flex items-center justify-center rounded-full shrink-0 font-display font-bold overflow-hidden select-none';
+
+    if (String(src).indexOf('data:image') === 0) {
+      return '<img src="' + src + '" alt="รูปโปรไฟล์ของ ' + esc(name) + '" class="' + cls + ' object-cover" style="' + style + '">';
+    }
+    if (String(src).indexOf('p:') === 0) {
+      return '<span class="' + cls + ' text-white" style="' + style + 'background:' + presetGradient(src.slice(2)) + '" aria-label="' + esc(name) + '">' + esc(initial(name)) + '</span>';
+    }
+    var bg = isGuest ? 'background:#e1e3e4;color:#444650;' : 'background:linear-gradient(135deg,#002366,#4a6fd4);color:#fff;';
+    return '<span class="' + cls + '" style="' + style + bg + '" aria-label="' + esc(name) + '">' + esc(initial(name)) + '</span>';
   }
 
   function badge(text, color) {
     var c = color || '#444650';
-    return '<span class="px-2 py-0.5 rounded-lg text-label-sm font-medium" style="background:' + c + '1a;color:' + c + '">' + esc(text) + '</span>';
+    return '<span class="px-2 py-0.5 rounded-lg text-label-sm font-medium whitespace-nowrap" style="background:' + c + '1f;color:' + c + '">' + esc(text) + '</span>';
   }
 
-  function toast(msg, type) {
-    var box = document.getElementById('toast');
-    if (!box) {
-      box = document.createElement('div');
-      box.id = 'toast';
-      box.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 items-center';
-      document.body.appendChild(box);
-    }
-    var color = type === 'error' ? 'bg-error text-on-error' : (type === 'warn' ? 'bg-warning text-white' : 'bg-inverse-surface text-inverse-on-surface');
-    var el = document.createElement('div');
-    el.className = color + ' px-4 py-3 rounded-lg text-label-md shadow-hover max-w-sm text-center';
-    el.textContent = msg;
-    box.appendChild(el);
-    setTimeout(function () { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; }, 3000);
-    setTimeout(function () { el.remove(); }, 3400);
+  function roleBadge(role) {
+    if (role === 'admin') return badge('ผู้ดูแล', '#ba1a1a');
+    if (role === 'teacher') return badge('ครู', '#002366');
+    return '';
   }
 
-  function param(name) {
-    return new URLSearchParams(location.search).get(name) || '';
+  function param(name) { return new URLSearchParams(location.search).get(name) || ''; }
+
+  // ---------- ร่างอัตโนมัติในช่องพิมพ์ ----------
+  function autosave(key, els) {
+    var saved = Store.get('draft:' + key, null);
+    if (saved) Object.keys(els).forEach(function (f) { if (els[f] && saved[f]) els[f].value = saved[f]; });
+    var timer;
+    Object.keys(els).forEach(function (f) {
+      if (!els[f]) return;
+      els[f].addEventListener('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(function () {
+          var data = {};
+          Object.keys(els).forEach(function (g) { if (els[g]) data[g] = els[g].value; });
+          Store.set('draft:' + key, data);
+        }, 600);
+      });
+    });
+    return {
+      clear: function () { Store.del('draft:' + key); },
+      hasSaved: !!saved
+    };
   }
 
-  // ---------- แถบเมนูบนสุด (ใช้ร่วมทุกหน้า) ----------
-  function renderHeader(active) {
-    var el = document.getElementById('site-header');
-    if (!el) return;
-    var u = Auth.user;
-    var right = u
-      ? '<div class="flex items-center gap-3">' +
-          (Auth.isAdmin() ? '<a href="admin.html" class="hidden sm:inline text-label-md text-inverse-primary hover:text-white">แผงผู้ดูแล</a>' : '') +
-          '<div class="flex items-center gap-2">' + avatarHtml(u.displayName, false) +
-          '<span class="hidden sm:inline text-label-md text-white">' + esc(u.displayName) + '</span></div>' +
-          '<button id="btn-logout" class="text-label-md text-inverse-primary hover:text-white">ออกจากระบบ</button>' +
-        '</div>'
-      : '<a href="login.html" class="bg-secondary text-on-secondary px-4 py-2 rounded-lg text-label-md hover:opacity-90">เข้าสู่ระบบ (Login)</a>';
+  // ---------- โหมดมืด ----------
+  var Theme = {
+    get: function () { return Store.get('theme', 'light'); },
+    apply: function (mode) {
+      document.documentElement.classList.toggle('dark', mode === 'dark');
+      Store.set('theme', mode);
+    },
+    toggle: function () { Theme.apply(Theme.get() === 'dark' ? 'light' : 'dark'); return Theme.get(); },
+    init: function () { document.documentElement.classList.toggle('dark', Store.get('theme', 'light') === 'dark'); }
+  };
+  Theme.init();
 
-    var nav = [
-      { href: 'index.html', label: 'เรียกดู (Browse)', key: 'browse' },
-      { href: 'index.html?sort=trending', label: 'กำลังมาแรง (Trending)', key: 'trending' },
-      { href: 'index.html?sort=latest', label: 'ล่าสุด (Latest)', key: 'latest' }
-    ].map(function (n) {
-      var on = n.key === active ? 'text-white border-b-2 border-secondary-fixed' : 'text-inverse-primary hover:text-white border-b-2 border-transparent';
-      return '<a href="' + n.href + '" class="' + on + ' pb-1 text-label-md transition">' + n.label + '</a>';
-    }).join('');
-
-    el.innerHTML =
-      '<header class="bg-primary text-on-primary sticky top-0 z-40">' +
-        '<div class="max-w-container mx-auto px-5 h-16 flex items-center justify-between gap-4">' +
-          '<a href="index.html" class="flex items-center gap-2 shrink-0">' +
-            '<span class="size-8 rounded bg-secondary flex items-center justify-center font-display font-bold text-on-secondary">E</span>' +
-            '<span class="font-display text-title-lg text-white">' + esc(CFG.SITE_NAME || 'EduForum') + '</span>' +
-          '</a>' +
-          '<nav class="hidden md:flex items-center gap-6">' + nav + '</nav>' +
-          right +
-        '</div>' +
-      '</header>';
-
-    var lo = document.getElementById('btn-logout');
-    if (lo) lo.addEventListener('click', Auth.logout);
-  }
-
-  function renderFooter() {
-    var el = document.getElementById('site-footer');
-    if (!el) return;
-    el.innerHTML =
-      '<footer class="border-t border-outline-variant mt-xl bg-surface-container-lowest">' +
-        '<div class="max-w-container mx-auto px-5 py-lg flex flex-col sm:flex-row items-center justify-between gap-3 text-label-sm text-on-surface-variant">' +
-          '<span>' + esc(CFG.SITE_NAME || 'EduForum') + ' — ' + esc(CFG.SCHOOL_NAME || '') + '</span>' +
-          '<span class="flex gap-4"><a href="#" class="hover:text-primary">ช่วยเหลือ (Help)</a><a href="#" class="hover:text-primary">ติดต่อเรา (Contact Us)</a></span>' +
-        '</div>' +
-      '</footer>';
-  }
-
-  // ---------- export ----------
   window.EF = {
     api: { get: get, post: post },
-    Auth: Auth, Store: Store, voterKey: voterKey,
-    esc: esc, textToHtml: textToHtml, timeAgo: timeAgo,
-    avatarHtml: avatarHtml, badge: badge, toast: toast, param: param,
-    renderHeader: renderHeader, renderFooter: renderFooter
+    Auth: Auth, Store: Store, Theme: Theme, voterKey: voterKey,
+    esc: esc, textToHtml: textToHtml, timeAgo: timeAgo, fullDate: fullDate,
+    avatar: avatar, presetGradient: presetGradient, presetCount: presetCount, initial: initial,
+    badge: badge, roleBadge: roleBadge, param: param, autosave: autosave
   };
 })();

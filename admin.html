@@ -3,238 +3,543 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EduForum — แผงควบคุมผู้ดูแลระบบ</title>
+<title>แผงควบคุมผู้ดูแล — EduForum</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="assets/js/theme.js"></script>
 <script src="assets/js/config.js"></script>
-<style>
-  body { font-family: 'Sarabun', 'Be Vietnam Pro', sans-serif; }
-  :focus-visible { outline: 2px solid #006a6a; outline-offset: 2px; }
-</style>
+<style>body { font-family: 'Sarabun', 'Be Vietnam Pro', sans-serif; }</style>
 </head>
 <body class="bg-surface text-on-surface">
 
 <div id="site-header"></div>
 
-<div id="gate" class="max-w-md mx-auto px-5 py-xl text-center">
+<div id="gate" class="max-w-md mx-auto px-5 py-xl text-center page-enter">
+  <span class="material-symbols-outlined text-[48px] text-outline mb-3">shield_person</span>
   <p class="text-body-lg mb-3">หน้านี้สำหรับผู้ดูแลระบบเท่านั้น</p>
-  <a href="login.html?next=admin.html" class="inline-block px-5 py-3 rounded-lg bg-primary-container text-on-primary text-label-md">เข้าสู่ระบบผู้ดูแล</a>
+  <a href="login.html?next=admin.html" class="btn inline-block px-5 py-3 min-h-11 rounded-lg bg-primary-container text-on-primary text-label-md">เข้าสู่ระบบผู้ดูแล</a>
 </div>
 
-<main id="panel" class="hidden max-w-container mx-auto px-5 py-lg">
-  <h1 class="font-display text-title-lg text-primary mb-lg">ภาพรวมระบบประจำวัน</h1>
+<main id="panel" class="hidden max-w-container mx-auto px-5 py-lg page-enter">
+  <div class="flex items-center justify-between gap-3 mb-lg flex-wrap">
+    <h1 class="font-display text-headline-md text-primary-container">แผงควบคุมผู้ดูแล</h1>
+    <button id="btn-refresh" class="btn flex items-center gap-2 px-4 py-2.5 min-h-11 rounded-lg border border-outline-variant text-label-md hover:border-secondary">
+      <span class="material-symbols-outlined text-[18px]">refresh</span> รีเฟรช
+    </button>
+  </div>
 
-  <!-- การ์ดสถิติ -->
   <section id="stat-cards" class="grid grid-cols-2 lg:grid-cols-4 gap-md mb-lg"></section>
 
-  <!-- กราฟ 7 วัน -->
-  <section class="bg-surface-container-lowest border border-outline-variant rounded p-md mb-lg">
-    <h2 class="font-display text-title-lg mb-md">ความเคลื่อนไหว 7 วันล่าสุด</h2>
-    <div id="chart" class="flex items-end gap-2 h-40"></div>
-  </section>
+  <div class="grid lg:grid-cols-3 gap-md mb-lg">
+    <section class="lg:col-span-2 bg-surface-container-lowest border border-outline-variant rounded p-md">
+      <h2 class="font-display text-title-lg mb-md">ความเคลื่อนไหว 7 วัน</h2>
+      <div id="chart" class="flex items-end gap-2 h-40" role="img" aria-label="กราฟแท่งแสดงจำนวนกระทู้และความคิดเห็น 7 วันย้อนหลัง"></div>
+      <div class="flex gap-4 mt-3 text-label-sm text-on-surface-variant">
+        <span class="flex items-center gap-1"><span class="size-3 rounded-sm bg-primary-container"></span> กระทู้</span>
+        <span class="flex items-center gap-1"><span class="size-3 rounded-sm bg-secondary"></span> ความคิดเห็น</span>
+      </div>
+    </section>
+    <section class="bg-surface-container-lowest border border-outline-variant rounded p-md">
+      <h2 class="font-display text-title-lg mb-md">หมวดที่ใช้งานมาก</h2>
+      <div id="cat-bars" class="flex flex-col gap-3"></div>
+    </section>
+  </div>
 
-  <!-- แท็บ -->
-  <nav class="flex gap-1 border-b border-outline-variant mb-md overflow-x-auto">
-    <button data-tab="queue" class="tab px-4 py-3 text-label-md whitespace-nowrap">รายการรอตรวจสอบ</button>
-    <button data-tab="users" class="tab px-4 py-3 text-label-md whitespace-nowrap">สมาชิก</button>
-    <button data-tab="settings" class="tab px-4 py-3 text-label-md whitespace-nowrap">ตั้งค่าระบบ</button>
-  </nav>
+  <div class="relative border-b border-outline-variant mb-md">
+    <div id="tabs" class="flex gap-1 overflow-x-auto" role="tablist"></div>
+    <span id="tab-bar" class="tab-underline absolute bottom-0 left-0 h-0.5 bg-secondary" style="width:0"></span>
+  </div>
 
-  <section id="tab-queue">
-    <h2 class="font-display text-title-lg mb-md">รายการโพสต์ที่ถูกรายงาน (Review Queue)</h2>
-    <div id="reports" class="flex flex-col gap-3 mb-lg"></div>
-    <h2 class="font-display text-title-lg mb-md">โพสต์รออนุมัติ</h2>
-    <div id="pending" class="flex flex-col gap-3"></div>
-  </section>
-
-  <section id="tab-users" class="hidden">
-    <input id="user-search" placeholder="ค้นหาชื่อผู้ใช้…"
-           class="w-full sm:w-80 h-11 px-3 mb-md rounded border border-outline-variant bg-surface-container-lowest text-body-md focus:border-secondary focus:outline-none">
-    <div class="overflow-x-auto bg-surface-container-lowest border border-outline-variant rounded">
-      <table class="w-full text-label-md">
-        <thead class="bg-surface-container text-on-surface-variant">
-          <tr><th class="text-left p-3">ชื่อผู้ใช้</th><th class="text-left p-3">ชื่อที่แสดง</th><th class="text-left p-3">บทบาท</th><th class="text-left p-3">โพสต์</th><th class="text-left p-3">สถานะ</th><th class="p-3"></th></tr>
-        </thead>
-        <tbody id="user-rows"></tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="tab-settings" class="hidden">
-    <div id="config-rows" class="flex flex-col gap-3 max-w-2xl"></div>
-  </section>
+  <div id="tab-body"></div>
 </main>
 
 <div id="site-footer"></div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/ui.js"></script>
 <script>
 (function () {
-  EF.renderHeader(''); EF.renderFooter();
+  UI.renderHeader('');
+  UI.renderFooter();
+  UI.bootstrap().then(function () { UI.renderHeader(''); UI.renderFooter(); });
+
   if (!EF.Auth.isAdmin()) return;
   document.getElementById('gate').classList.add('hidden');
   document.getElementById('panel').classList.remove('hidden');
 
-  // ---------- แท็บ ----------
-  var on = 'tab px-4 py-3 text-label-md whitespace-nowrap border-b-2 border-secondary text-primary font-semibold';
-  var off = 'tab px-4 py-3 text-label-md whitespace-nowrap border-b-2 border-transparent text-on-surface-variant';
-  function switchTab(name) {
-    ['queue', 'users', 'settings'].forEach(function (t) {
-      document.getElementById('tab-' + t).classList.toggle('hidden', t !== name);
-      document.querySelector('[data-tab="' + t + '"]').className = t === name ? on : off;
-    });
-    if (name === 'users') loadUsers('');
-    if (name === 'settings') loadConfig();
-  }
-  document.querySelectorAll('.tab').forEach(function (b) {
-    b.addEventListener('click', function () { switchTab(b.dataset.tab); });
+  var TABS = [
+    { key: 'queue', label: 'รอตรวจสอบ' },
+    { key: 'users', label: 'สมาชิก' },
+    { key: 'categories', label: 'หมวดหมู่' },
+    { key: 'settings', label: 'ตั้งค่า' },
+    { key: 'logs', label: 'ประวัติ' }
+  ];
+
+  buildTabs();
+  loadStats();
+
+  document.getElementById('btn-refresh').addEventListener('click', function () {
+    loadStats();
+    var active = document.querySelector('#tabs [aria-selected="true"]');
+    if (active) render(active.dataset.tab);
+    UI.toast('อัปเดตข้อมูลแล้ว');
   });
-  switchTab('queue');
 
-  // ---------- สถิติ ----------
-  function card(label, value, icon, tone) {
-    return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md">' +
-      '<div class="flex items-center justify-between mb-2">' +
-        '<span class="text-label-md text-on-surface-variant">' + label + '</span>' +
-        '<span class="material-symbols-outlined text-[20px] ' + tone + '">' + icon + '</span>' +
-      '</div>' +
-      '<p class="font-display text-headline-lg text-primary">' + value + '</p></div>';
-  }
-
+  // ============ สถิติ ============
   function loadStats() {
     EF.api.post('admin.stats', {}).then(function (r) {
-      if (!r.ok) return EF.toast(r.error, 'error');
+      if (!r.ok) return UI.toast(r.error, 'error');
       var s = r.stats;
       document.getElementById('stat-cards').innerHTML =
-        card('กระทู้ใหม่วันนี้', s.newThreadsToday, 'forum', 'text-secondary') +
-        card('ความเห็นวันนี้', s.newRepliesToday, 'chat', 'text-secondary') +
-        card('รอตรวจสอบ', s.pendingReports + s.pendingPosts, 'flag', 'text-error') +
-        card('สมาชิกทั้งหมด', s.totalUsers, 'group', 'text-primary-container');
+        statCard('กระทู้ใหม่วันนี้', s.newThreadsToday, 'forum', 'text-secondary') +
+        statCard('สมาชิกใหม่วันนี้', s.newUsersToday, 'person_add', 'text-primary-container') +
+        statCard('รอตรวจสอบ', s.pendingReports + s.pendingPosts, 'flag', 'text-error', s.pendingReports + s.pendingPosts > 0) +
+        statCard('ถูกจำกัดสิทธิ์', s.restrictedUsers, 'block', 'text-warning');
 
       var max = Math.max(1, Math.max.apply(null, r.series.map(function (d) { return d.threads + d.replies; })));
       document.getElementById('chart').innerHTML = r.series.map(function (d) {
-        var h = Math.round(((d.threads + d.replies) / max) * 100);
-        var day = new Date(d.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
-        return '<div class="flex-1 flex flex-col items-center justify-end gap-1 h-full">' +
-          '<span class="text-label-sm text-outline">' + (d.threads + d.replies) + '</span>' +
-          '<div class="w-full rounded-t bg-primary-container" style="height:' + Math.max(h, 2) + '%" title="' + day + '"></div>' +
+        var day = new Date(d.date).toLocaleDateString('th-TH', { weekday: 'short' });
+        var th = Math.round((d.threads / max) * 100), rp = Math.round((d.replies / max) * 100);
+        return '<div class="flex-1 flex flex-col items-center justify-end gap-1 h-full group" title="' + day + ': ' + d.threads + ' กระทู้, ' + d.replies + ' ความเห็น">' +
+          '<div class="w-full flex flex-col justify-end gap-0.5 flex-1">' +
+            '<div class="w-full rounded-t bg-primary-container transition-all" style="height:' + Math.max(th, 1) + '%"></div>' +
+            '<div class="w-full rounded-b bg-secondary transition-all" style="height:' + Math.max(rp, 1) + '%"></div>' +
+          '</div>' +
           '<span class="text-label-sm text-outline">' + day + '</span></div>';
       }).join('');
-    }).catch(function (e) { EF.toast(e.message, 'error'); });
+
+      var cmax = Math.max(1, Math.max.apply(null, (r.categories.length ? r.categories : [{ count: 1 }]).map(function (c) { return c.count; })));
+      document.getElementById('cat-bars').innerHTML = r.categories.length
+        ? r.categories.map(function (c) {
+            return '<div><div class="flex justify-between text-label-sm mb-1"><span>' + EF.esc(c.name) + '</span><span class="text-outline">' + c.count + '</span></div>' +
+              '<div class="h-2 rounded-full bg-surface-container overflow-hidden"><div class="h-full rounded-full transition-all" style="width:' + Math.round((c.count / cmax) * 100) + '%;background:' + c.color + '"></div></div></div>';
+          }).join('')
+        : '<p class="text-body-md text-on-surface-variant">ยังไม่มีข้อมูล</p>';
+    }).catch(function (e) { UI.toast(e.message, 'error'); });
   }
 
-  // ---------- คิวตรวจสอบ ----------
-  function loadQueue() {
+  function statCard(label, value, icon, tone, alert) {
+    return '<div class="bg-surface-container-lowest border ' + (alert ? 'border-error' : 'border-outline-variant') + ' rounded p-md reveal">' +
+      '<div class="flex items-center justify-between mb-2">' +
+        '<span class="text-label-md text-on-surface-variant">' + label + '</span>' +
+        '<span class="material-symbols-outlined text-[20px] ' + tone + '">' + icon + '</span></div>' +
+      '<p class="font-display text-headline-lg text-primary-container">' + value + '</p></div>';
+  }
+
+  // ============ แท็บ ============
+  function buildTabs() {
+    document.getElementById('tabs').innerHTML = TABS.map(function (t, i) {
+      return '<button role="tab" data-tab="' + t.key + '" aria-selected="' + (i === 0) + '" ' +
+        'class="btn px-4 py-3 min-h-11 text-label-md whitespace-nowrap ' +
+        (i === 0 ? 'text-primary-container font-semibold' : 'text-on-surface-variant hover:text-on-surface') + '">' + t.label + '</button>';
+    }).join('');
+    document.getElementById('tabs').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-tab]');
+      if (b) selectTab(b.dataset.tab);
+    });
+    selectTab('queue');
+  }
+
+  function selectTab(name) {
+    document.querySelectorAll('#tabs [data-tab]').forEach(function (b) {
+      var on = b.dataset.tab === name;
+      b.setAttribute('aria-selected', on);
+      b.className = 'btn px-4 py-3 min-h-11 text-label-md whitespace-nowrap ' +
+        (on ? 'text-primary-container font-semibold' : 'text-on-surface-variant hover:text-on-surface');
+    });
+    moveBar();
+    render(name);
+  }
+
+  function moveBar() {
+    var active = document.querySelector('#tabs [aria-selected="true"]');
+    var bar = document.getElementById('tab-bar');
+    if (!active) return;
+    bar.style.width = active.offsetWidth + 'px';
+    bar.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+  }
+  window.addEventListener('resize', moveBar);
+
+  function render(name) {
+    var body = document.getElementById('tab-body');
+    body.className = 'page-enter';
+    ({ queue: renderQueue, users: renderUsers, categories: renderCategories, settings: renderSettings, logs: renderLogs }[name] || renderQueue)(body);
+  }
+
+  // ============ คิวตรวจสอบ ============
+  function renderQueue(body) {
+    body.innerHTML =
+      '<h2 class="font-display text-title-lg mb-md">โพสต์ที่ถูกรายงาน</h2><div id="reports">' + UI.skeletonList(2) + '</div>' +
+      '<h2 class="font-display text-title-lg mt-lg mb-md">โพสต์รออนุมัติ</h2><div id="pending"></div>';
+
     EF.api.post('admin.reports', { status: 'pending' }).then(function (r) {
-      if (!r.ok) return EF.toast(r.error, 'error');
+      if (!r.ok) return UI.toast(r.error, 'error');
 
       document.getElementById('reports').innerHTML = r.reports.length ? r.reports.map(function (x) {
-        return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md">' +
-          '<div class="flex items-start justify-between gap-3 flex-wrap">' +
-            '<div class="min-w-0">' +
-              '<p class="text-label-md text-on-surface font-semibold break-words">' + EF.esc(x.targetTitle) + '</p>' +
-              '<p class="text-label-sm text-outline mt-1">โดย ' + EF.esc(x.authorName) + ' · ' + EF.timeAgo(x.createdAt) + ' · เหตุผล: ' + EF.esc(x.reason) + '</p>' +
-              '<p class="text-body-md text-on-surface-variant mt-2 line-clamp-3">' + EF.esc(x.snippet) + '</p>' +
-            '</div>' +
-            '<div class="flex gap-2 shrink-0">' +
-              '<a href="thread.html?id=' + encodeURIComponent(x.targetType === 'thread' ? x.targetId : '') + '" class="px-3 py-2 rounded-lg text-label-sm border border-outline-variant hover:border-secondary">ดู</a>' +
-              '<button data-mod="keep" data-id="' + x.id + '" class="px-3 py-2 rounded-lg text-label-sm border border-outline-variant hover:border-secondary">เก็บไว้</button>' +
-              '<button data-mod="hide" data-id="' + x.id + '" class="px-3 py-2 rounded-lg text-label-sm bg-warning text-white">ซ่อน</button>' +
-              '<button data-mod="delete" data-id="' + x.id + '" class="px-3 py-2 rounded-lg text-label-sm bg-error text-on-error">ลบ</button>' +
-            '</div>' +
+        var repeat = x.reportCount > 1 ? EF.badge('ถูกรายงาน ' + x.reportCount + ' ครั้ง', '#ba1a1a') : '';
+        var typeLabel = x.targetType === 'user' ? 'รายงานผู้ใช้' : (x.targetType === 'reply' ? 'ความคิดเห็น' : 'กระทู้');
+        var actions = x.targetType === 'user'
+          ? '<button data-userflow="' + EF.esc(x.authorName) + '" data-link="' + EF.esc(x.link) + '" class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm bg-primary-container text-on-primary">จัดการผู้ใช้</button>' +
+            '<button data-mod="keep" data-id="' + x.id + '" class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm border border-outline-variant hover:border-secondary">ปิดเรื่อง</button>'
+          : '<button data-mod="keep" data-id="' + x.id + '" class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm border border-outline-variant hover:border-secondary">เก็บไว้</button>' +
+            '<button data-mod="hide" data-id="' + x.id + '" class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm bg-warning text-white">ซ่อน</button>' +
+            '<button data-mod="delete" data-id="' + x.id + '" class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm bg-error text-on-error">นำออก</button>';
+
+        return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md mb-3 reveal">' +
+          '<div class="flex items-center gap-2 mb-2 flex-wrap">' + EF.badge(typeLabel, '#444650') + repeat +
+            '<span class="text-label-sm text-outline">เหตุผล: ' + EF.esc(x.reason) + '</span></div>' +
+          '<p class="text-label-md font-semibold break-words">' + EF.esc(x.targetTitle) + '</p>' +
+          (x.detail ? '<p class="text-label-sm text-on-surface-variant mt-1">รายละเอียดจากผู้รายงาน: ' + EF.esc(x.detail) + '</p>' : '') +
+          '<p class="text-body-md text-on-surface-variant mt-2 line-clamp-3">' + EF.esc(x.snippet) + '</p>' +
+          '<p class="text-label-sm text-outline mt-2">โดย ' + EF.esc(x.authorName) + ' · รายงานเมื่อ ' + EF.timeAgo(x.createdAt) + ' · ผู้รายงาน ' + EF.esc(x.reporterKey) + '</p>' +
+          '<div class="flex gap-2 mt-3 flex-wrap">' +
+            (x.link ? '<a href="' + x.link + '" target="_blank" class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm border border-outline-variant hover:border-secondary">เปิดดู</a>' : '') +
+            actions +
           '</div></div>';
-      }).join('') : '<p class="text-body-md text-on-surface-variant">ไม่มีรายงานค้างอยู่</p>';
+      }).join('') : '<p class="text-body-md text-on-surface-variant">ไม่มีรายงานค้างอยู่ เยี่ยมมาก</p>';
 
       document.getElementById('pending').innerHTML = r.pending.length ? r.pending.map(function (x) {
-        return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md flex items-start justify-between gap-3 flex-wrap">' +
+        return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md mb-3 flex items-start justify-between gap-3 flex-wrap reveal">' +
           '<div class="min-w-0"><p class="text-label-md font-semibold break-words">' + EF.esc(x.title) + '</p>' +
-          '<p class="text-label-sm text-outline mt-1">' + EF.esc(x.authorName) + ' · ' + EF.timeAgo(x.createdAt) + '</p>' +
-          '<p class="text-body-md text-on-surface-variant mt-2 line-clamp-3">' + EF.esc(x.body) + '</p></div>' +
+          '<p class="text-body-md text-on-surface-variant mt-1 line-clamp-3">' + EF.esc(x.body) + '</p>' +
+          '<p class="text-label-sm text-outline mt-1">' + EF.esc(x.authorName) + ' · ' + EF.timeAgo(x.createdAt) + '</p></div>' +
           '<div class="flex gap-2 shrink-0">' +
-            '<button data-approve="' + x.id + '" data-type="' + x.type + '" class="px-3 py-2 rounded-lg text-label-sm bg-secondary text-on-secondary">อนุมัติ</button>' +
-            '<button data-reject="' + x.id + '" data-type="' + x.type + '" class="px-3 py-2 rounded-lg text-label-sm border border-outline-variant hover:border-error hover:text-error">ไม่อนุมัติ</button>' +
+            '<button data-approve="' + x.id + '" data-type="' + x.type + '" class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm bg-secondary text-on-secondary">อนุมัติ</button>' +
+            '<button data-reject="' + x.id + '" data-type="' + x.type + '" class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm border border-outline-variant hover:border-error hover:text-error">ไม่อนุมัติ</button>' +
           '</div></div>';
       }).join('') : '<p class="text-body-md text-on-surface-variant">ไม่มีโพสต์รออนุมัติ</p>';
+
+      UI.reveal(body);
     });
   }
 
+  // ============ สมาชิก ============
+  var userFilter = 'all';
+  function renderUsers(body) {
+    body.innerHTML =
+      '<div class="flex gap-2 mb-md flex-wrap items-center">' +
+        '<input id="user-search" placeholder="ค้นหาชื่อ ชื่อเล่น หรือชั้นเรียน…" class="h-11 px-3 rounded border border-outline-variant bg-surface-container-lowest text-body-md focus:border-secondary focus:outline-none flex-1 min-w-52">' +
+        filterChip('all', 'ทั้งหมด') + filterChip('warned', 'ถูกตักเตือน') + filterChip('restricted', 'ถูกจำกัด') + filterChip('staff', 'ครู/ผู้ดูแล') +
+      '</div>' +
+      '<div id="user-list">' + UI.skeletonList(4) + '</div>';
+
+    var search = document.getElementById('user-search');
+    var timer;
+    search.addEventListener('input', function () {
+      clearTimeout(timer);
+      var v = search.value;
+      timer = setTimeout(function () { loadUsers(v); }, 350);
+    });
+    body.querySelectorAll('[data-filter]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        userFilter = b.dataset.filter;
+        body.querySelectorAll('[data-filter]').forEach(function (x) {
+          var on = x.dataset.filter === userFilter;
+          x.classList.toggle('bg-secondary-container', on);
+          x.classList.toggle('border-secondary', on);
+        });
+        loadUsers(search.value);
+      });
+    });
+    loadUsers('');
+  }
+
+  function filterChip(key, label) {
+    var on = key === userFilter;
+    return '<button data-filter="' + key + '" class="btn px-3 h-11 rounded-lg border text-label-sm ' +
+      (on ? 'bg-secondary-container border-secondary' : 'border-outline-variant') + '">' + label + '</button>';
+  }
+
+  function loadUsers(q) {
+    EF.api.post('admin.users', { q: q, filter: userFilter }).then(function (r) {
+      if (!r.ok) return UI.toast(r.error, 'error');
+      var box = document.getElementById('user-list');
+      if (!r.users.length) { box.innerHTML = '<p class="text-body-md text-on-surface-variant">ไม่พบสมาชิกที่ตรงกับเงื่อนไข</p>'; return; }
+      box.innerHTML = r.users.map(userRow).join('');
+      UI.reveal(box);
+    });
+  }
+
+  function userRow(u) {
+    var restricted = u.status === 'banned' ? EF.badge('แบนถาวร', '#ba1a1a')
+      : (u.suspendedUntil && new Date(u.suspendedUntil) > new Date()) ? EF.badge('ระงับถึง ' + EF.fullDate(u.suspendedUntil), '#b45309') : '';
+    var warns = u.warnCount > 0 ? EF.badge('เตือน ' + u.warnCount, '#b45309') : '';
+    // ผู้ดูแลเห็นข้อมูลส่วนตัวเพื่อยืนยันตัวตนจริงเวลามีเรื่องร้องเรียน
+    var priv = [u.realName, u.nickname && ('เล่น ' + u.nickname), u.classroom, u.contact].filter(Boolean).join(' · ');
+
+    return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md mb-3 reveal">' +
+      '<div class="flex items-start gap-3">' + EF.avatar(u, 'md') +
+        '<div class="min-w-0 flex-1">' +
+          '<div class="flex items-center gap-2 flex-wrap">' +
+            '<a href="profile.html?u=' + encodeURIComponent(u.username) + '" class="text-label-md font-semibold hover:text-secondary">' + EF.esc(u.displayName) + '</a>' +
+            EF.roleBadge(u.role) + restricted + warns +
+          '</div>' +
+          '<p class="text-label-sm text-outline">@' + EF.esc(u.username) + ' · โพสต์ ' + u.postCount + ' · เข้าร่วม ' + EF.fullDate(u.createdAt) + '</p>' +
+          (priv ? '<p class="text-label-sm text-on-surface-variant mt-1 flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">lock</span>' + EF.esc(priv) + '</p>' : '') +
+        '</div>' +
+        '<button data-user-menu="' + u.id + '" data-name="' + EF.esc(u.displayName) + '" data-role="' + u.role + '" data-status="' + u.status + '" class="btn shrink-0 size-11 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="จัดการผู้ใช้"><span class="material-symbols-outlined">more_vert</span></button>' +
+      '</div></div>';
+  }
+
+  // ============ เมนูจัดการผู้ใช้ ============
+  function userActionMenu(userId, name, role, status) {
+    var banned = status === 'banned';
+    UI.modal({
+      title: 'จัดการ ' + name,
+      body:
+        '<div class="flex flex-col gap-2">' +
+          actBtn('warn', 'campaign', 'ตักเตือน', 'ส่งคำเตือนถึงผู้ใช้ ครบตามเกณฑ์จะระงับอัตโนมัติ') +
+          actBtn('suspend', 'timer', 'ระงับการโพสต์ชั่วคราว', 'ยังอ่านได้แต่โพสต์ไม่ได้ตามจำนวนวันที่ตั้ง') +
+          (banned
+            ? actBtn('unban', 'lock_open', 'ปลดแบน', 'คืนสิทธิ์ให้กลับมาใช้งานได้', 'text-secondary')
+            : actBtn('ban', 'block', 'แบนถาวร', 'ระงับบัญชีถาวร ออกจากระบบทุกอุปกรณ์', 'text-error')) +
+          '<hr class="border-outline-variant my-1">' +
+          actBtn('role', 'badge', 'เปลี่ยนบทบาท', 'ตั้งเป็นนักเรียน ครู หรือผู้ดูแล') +
+          actBtn('resetPassword', 'password', 'ตั้งรหัสผ่านชั่วคราว', 'สร้างรหัสใหม่ให้ผู้ใช้ที่ลืมรหัสผ่าน') +
+        '</div>',
+      onOpen: function (wrap) {
+        wrap.querySelectorAll('[data-act]').forEach(function (b) {
+          b.addEventListener('click', function () { runAction(b.dataset.act, userId, name, role); });
+        });
+      }
+    });
+  }
+
+  function actBtn(act, icon, label, note, tone) {
+    return '<button data-act="' + act + '" class="btn text-left flex items-start gap-3 px-3 py-3 rounded-lg hover:bg-surface-container">' +
+      '<span class="material-symbols-outlined ' + (tone || 'text-on-surface-variant') + '">' + icon + '</span>' +
+      '<span><span class="block text-label-md ' + (tone || '') + '">' + label + '</span>' +
+      '<span class="block text-label-sm text-outline">' + note + '</span></span></button>';
+  }
+
+  function runAction(act, userId, name, role) {
+    if (act === 'role') {
+      UI.modal({
+        title: 'เปลี่ยนบทบาทของ ' + name,
+        body: '<div class="flex flex-col gap-2">' +
+          ['student', 'teacher', 'admin'].map(function (r) {
+            var label = { student: 'นักเรียน', teacher: 'ครู / บุคลากร', admin: 'ผู้ดูแลระบบ' }[r];
+            return '<button data-role="' + r + '" class="btn text-left px-4 py-3 min-h-11 rounded-lg border ' + (r === role ? 'border-secondary bg-secondary-container' : 'border-outline-variant hover:border-secondary') + ' text-label-md">' + label + '</button>';
+          }).join('') + '</div>',
+        onOpen: function (w) {
+          w.querySelectorAll('[data-role]').forEach(function (b) {
+            b.addEventListener('click', function () {
+              EF.api.post('admin.userAction', { act: 'role', userId: userId, role: b.dataset.role }).then(function (r) {
+                UI.closeModal();
+                if (r.ok) { UI.toast('เปลี่ยนบทบาทเป็น ' + b.textContent + ' แล้ว', 'success'); reloadUsers(); }
+                else UI.toast(r.error, 'error');
+              });
+            });
+          });
+        }
+      });
+      return;
+    }
+
+    if (act === 'resetPassword') {
+      if (!confirm('สร้างรหัสผ่านชั่วคราวใหม่ให้ ' + name + '?\nรหัสเดิมจะใช้ไม่ได้ทันที')) return;
+      EF.api.post('admin.userAction', { act: 'resetPassword', userId: userId }).then(function (r) {
+        UI.closeModal();
+        if (!r.ok) return UI.toast(r.error, 'error');
+        UI.modal({
+          title: 'รหัสผ่านชั่วคราว',
+          body: '<p class="text-body-md mb-3">แจ้งรหัสนี้ให้ ' + EF.esc(name) + ' แล้วให้เปลี่ยนทันทีหลังเข้าใช้งาน</p>' +
+            '<div class="flex items-center gap-2"><code class="flex-1 px-4 py-3 rounded-lg bg-surface-container text-title-lg font-mono select-all">' + EF.esc(r.tempPassword) + '</code>' +
+            '<button id="copy-temp" class="btn px-4 py-3 min-h-11 rounded-lg bg-primary-container text-on-primary text-label-md">คัดลอก</button></div>',
+          onOpen: function (w) {
+            w.querySelector('#copy-temp').addEventListener('click', function () {
+              navigator.clipboard.writeText(r.tempPassword).then(function () { UI.toast('คัดลอกแล้ว', 'success'); });
+            });
+          }
+        });
+      });
+      return;
+    }
+
+    // warn / suspend / ban / unban — ขอเหตุผล
+    var needReason = act !== 'unban';
+    var needDays = act === 'suspend';
+    UI.modal({
+      title: ({ warn: 'ตักเตือน', suspend: 'ระงับการโพสต์', ban: 'แบนถาวร', unban: 'ปลดแบน' }[act]) + ' ' + name,
+      body:
+        (needDays ? '<label class="block text-label-md text-on-surface-variant mb-1">จำนวนวันที่ระงับ</label>' +
+          '<input id="act-days" type="number" value="7" min="1" max="365" class="w-full h-12 px-3 mb-md rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">' : '') +
+        (needReason ? '<label class="block text-label-md text-on-surface-variant mb-1">เหตุผล (ผู้ใช้จะเห็น)</label>' +
+          '<textarea id="act-reason" rows="3" placeholder="เช่น ใช้ถ้อยคำไม่เหมาะสมในกระทู้…" class="w-full p-3 mb-md rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none"></textarea>' : '') +
+        '<div class="flex justify-end gap-2">' +
+          '<button data-close class="btn px-5 py-3 min-h-11 rounded-lg text-label-md text-on-surface-variant hover:bg-surface-container">ยกเลิก</button>' +
+          '<button id="act-go" class="btn px-5 py-3 min-h-11 rounded-lg text-label-md ' + (act === 'ban' ? 'bg-error text-on-error' : 'bg-primary-container text-on-primary') + '">ยืนยัน</button>' +
+        '</div>',
+      onOpen: function (w) {
+        w.querySelector('#act-go').addEventListener('click', function () {
+          var payload = { act: act, userId: userId };
+          if (needReason) payload.reason = (w.querySelector('#act-reason') || {}).value || '';
+          if (needDays) payload.days = (w.querySelector('#act-days') || {}).value || 7;
+          this.disabled = true;
+          EF.api.post('admin.userAction', payload).then(function (r) {
+            UI.closeModal();
+            if (r.ok) { UI.toast('ดำเนินการแล้ว', 'success'); reloadUsers(); loadStats(); }
+            else UI.toast(r.error, 'error');
+          });
+        });
+      }
+    });
+  }
+
+  function reloadUsers() {
+    var s = document.getElementById('user-search');
+    if (s) loadUsers(s.value);
+  }
+
+  // ============ หมวดหมู่ ============
+  function renderCategories(body) {
+    body.innerHTML = '<div class="flex items-center justify-between mb-md"><h2 class="font-display text-title-lg">จัดการหมวดหมู่</h2>' +
+      '<button id="add-cat" class="btn px-4 py-2.5 min-h-11 rounded-lg bg-secondary text-on-secondary text-label-md">เพิ่มหมวด</button></div>' +
+      '<div id="cat-list">' + UI.skeletonList(3) + '</div>';
+    document.getElementById('add-cat').addEventListener('click', function () { editCategory(null); });
+    loadCats();
+  }
+
+  function loadCats() {
+    EF.api.post('admin.category', { mode: 'list' }).then(function (r) {
+      if (!r.ok) return UI.toast(r.error, 'error');
+      document.getElementById('cat-list').innerHTML = r.categories.map(function (c) {
+        return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md mb-2 flex items-center gap-3">' +
+          '<span class="size-4 rounded-full shrink-0" style="background:' + c.color + '"></span>' +
+          '<div class="min-w-0 flex-1"><p class="text-label-md font-semibold">' + EF.esc(c.name) + (c.active ? '' : ' <span class="text-outline">(ปิด)</span>') + '</p>' +
+          '<p class="text-label-sm text-outline truncate">' + EF.esc(c.description || '') + '</p></div>' +
+          '<button data-edit-cat=\'' + JSON.stringify({ id: c.id, name: c.name, color: c.color, description: c.description, sortOrder: c.sortOrder, active: c.active }).replace(/'/g, '&#39;') + '\' class="btn px-3 py-2 min-h-11 rounded-lg text-label-sm border border-outline-variant hover:border-secondary">แก้ไข</button>' +
+        '</div>';
+      }).join('');
+      document.querySelectorAll('[data-edit-cat]').forEach(function (b) {
+        b.addEventListener('click', function () { editCategory(JSON.parse(b.dataset.editCat)); });
+      });
+    });
+  }
+
+  function editCategory(c) {
+    c = c || { name: '', color: '#006a6a', description: '', sortOrder: 99, active: true };
+    UI.modal({
+      title: c.id ? 'แก้ไขหมวดหมู่' : 'เพิ่มหมวดหมู่',
+      body:
+        '<div class="flex flex-col gap-md">' +
+          '<div><label class="block text-label-md text-on-surface-variant mb-1">ชื่อหมวด</label>' +
+            '<input id="c-name" value="' + EF.esc(c.name) + '" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none"></div>' +
+          '<div><label class="block text-label-md text-on-surface-variant mb-1">คำอธิบาย</label>' +
+            '<input id="c-desc" value="' + EF.esc(c.description) + '" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none"></div>' +
+          '<div class="flex gap-md"><div><label class="block text-label-md text-on-surface-variant mb-1">สี</label>' +
+            '<input id="c-color" type="color" value="' + EF.esc(c.color) + '" class="h-12 w-20 rounded border border-outline-variant bg-surface"></div>' +
+            '<div class="flex-1"><label class="block text-label-md text-on-surface-variant mb-1">ลำดับ</label>' +
+            '<input id="c-order" type="number" value="' + (c.sortOrder || 99) + '" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none"></div></div>' +
+          (c.id ? '<label class="flex items-center gap-2 text-label-md"><input id="c-active" type="checkbox" ' + (c.active ? 'checked' : '') + ' class="size-4 accent-[#006a6a]"> เปิดใช้งานหมวดนี้</label>' : '') +
+          '<div class="flex justify-end gap-2">' +
+            '<button data-close class="btn px-5 py-3 min-h-11 rounded-lg text-label-md text-on-surface-variant hover:bg-surface-container">ยกเลิก</button>' +
+            '<button id="c-save" class="btn px-5 py-3 min-h-11 rounded-lg bg-secondary text-on-secondary text-label-md">บันทึก</button>' +
+          '</div>' +
+        '</div>',
+      onOpen: function (w) {
+        w.querySelector('#c-save').addEventListener('click', function () {
+          var payload = {
+            id: c.id, name: w.querySelector('#c-name').value.trim(),
+            description: w.querySelector('#c-desc').value.trim(),
+            color: w.querySelector('#c-color').value, sortOrder: w.querySelector('#c-order').value
+          };
+          var ac = w.querySelector('#c-active');
+          if (ac) payload.active = ac.checked;
+          if (!payload.name) return UI.toast('ใส่ชื่อหมวดก่อน', 'warn');
+          EF.api.post('admin.category', payload).then(function (r) {
+            UI.closeModal();
+            if (r.ok) { UI.toast('บันทึกหมวดหมู่แล้ว', 'success'); loadCats(); }
+            else UI.toast(r.error, 'error');
+          });
+        });
+      }
+    });
+  }
+
+  // ============ ตั้งค่า ============
+  function renderSettings(body) {
+    body.innerHTML = '<h2 class="font-display text-title-lg mb-md">ตั้งค่าระบบ</h2><div id="cfg-list" class="flex flex-col gap-3 max-w-2xl">' + UI.skeletonList(3) + '</div>';
+    EF.api.post('admin.config', { mode: 'list' }).then(function (r) {
+      if (!r.ok) return UI.toast(r.error, 'error');
+      var bools = ['allowGuestThread', 'allowGuestReply', 'guestNeedsApproval', 'allowRegister'];
+      document.getElementById('cfg-list').innerHTML = r.config.map(function (c) {
+        var control = bools.indexOf(c.key) !== -1
+          ? '<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-cfg="' + EF.esc(c.key) + '" ' + (String(c.value) === 'true' ? 'checked' : '') + ' class="size-5 accent-[#006a6a]"></label>'
+          : '<input data-cfg="' + EF.esc(c.key) + '" value="' + EF.esc(c.value) + '" class="h-11 px-3 w-full sm:w-56 rounded border border-outline-variant bg-surface text-label-md focus:border-secondary focus:outline-none">';
+        return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md flex items-center gap-3 flex-wrap">' +
+          '<div class="min-w-0 flex-1"><p class="text-label-md font-semibold">' + EF.esc(c.note || c.key) + '</p>' +
+          '<p class="text-label-sm text-outline">' + EF.esc(c.key) + '</p></div>' + control +
+          '<button data-save-cfg="' + EF.esc(c.key) + '" class="btn px-4 py-2 min-h-11 rounded-lg bg-primary-container text-on-primary text-label-sm">บันทึก</button></div>';
+      }).join('');
+    });
+  }
+
+  // ============ ประวัติการใช้งาน ============
+  function renderLogs(body) {
+    body.innerHTML = '<h2 class="font-display text-title-lg mb-md">ประวัติการดำเนินการ</h2><div id="log-list">' + UI.skeletonList(4) + '</div>';
+    EF.api.post('admin.logs', {}).then(function (r) {
+      if (!r.ok) return UI.toast(r.error, 'error');
+      document.getElementById('log-list').innerHTML = r.logs.length
+        ? '<div class="bg-surface-container-lowest border border-outline-variant rounded overflow-hidden">' +
+          r.logs.map(function (l) {
+            return '<div class="flex items-center gap-3 px-4 py-3 border-b border-outline-variant last:border-0 text-label-md">' +
+              '<span class="text-label-sm text-outline w-32 shrink-0">' + EF.timeAgo(l.at) + '</span>' +
+              '<span class="font-mono text-label-sm text-primary-container w-32 shrink-0 truncate">' + EF.esc(l.action) + '</span>' +
+              '<span class="text-on-surface-variant shrink-0">' + EF.esc(l.actor) + '</span>' +
+              '<span class="text-outline truncate">' + EF.esc(l.detail) + '</span></div>';
+          }).join('') + '</div>'
+        : '<p class="text-body-md text-on-surface-variant">ยังไม่มีประวัติ</p>';
+    });
+  }
+
+  // ============ event รวม ============
   document.addEventListener('click', function (e) {
     var mod = e.target.closest('[data-mod]');
     if (mod) {
-      if (mod.dataset.mod === 'delete' && !confirm('ยืนยันลบเนื้อหานี้ออกจากเว็บบอร์ด?\n\nเนื้อหาจะถูกทำเครื่องหมายว่าลบและไม่แสดงบนหน้าเว็บ ข้อมูลยังคงอยู่ในชีต Threads/Replies')) return;
+      if (mod.dataset.mod === 'delete' && !confirm('นำเนื้อหานี้ออกจากหน้าเว็บ?\nข้อมูลยังอยู่ในชีตเพื่อตรวจย้อนหลังได้')) return;
       EF.api.post('admin.moderate', { reportId: mod.dataset.id, decision: mod.dataset.mod })
-        .then(function (r) { if (r.ok) { EF.toast('ดำเนินการแล้ว'); loadQueue(); loadStats(); } else EF.toast(r.error, 'error'); });
+        .then(function (r) { if (r.ok) { UI.toast('ดำเนินการแล้ว', 'success'); render('queue'); loadStats(); } else UI.toast(r.error, 'error'); });
       return;
     }
     var ap = e.target.closest('[data-approve]');
     if (ap) {
       EF.api.post('admin.setStatus', { targetType: ap.dataset.type, targetId: ap.dataset.approve, status: 'active' })
-        .then(function (r) { if (r.ok) { EF.toast('อนุมัติแล้ว'); loadQueue(); loadStats(); } });
+        .then(function (r) { if (r.ok) { UI.toast('อนุมัติแล้ว', 'success'); render('queue'); loadStats(); } });
       return;
     }
     var rj = e.target.closest('[data-reject]');
     if (rj) {
       EF.api.post('admin.setStatus', { targetType: rj.dataset.type, targetId: rj.dataset.reject, status: 'hidden' })
-        .then(function (r) { if (r.ok) { EF.toast('ไม่อนุมัติแล้ว'); loadQueue(); } });
+        .then(function (r) { if (r.ok) { UI.toast('ไม่อนุมัติแล้ว', 'success'); render('queue'); } });
       return;
     }
-    var role = e.target.closest('[data-role-user]');
-    if (role) {
-      EF.api.post('admin.setRole', { userId: role.dataset.roleUser, role: role.dataset.role })
-        .then(function (r) { if (r.ok) { EF.toast('ปรับบทบาทแล้ว'); loadUsers(document.getElementById('user-search').value); } });
+    var um = e.target.closest('[data-user-menu]');
+    if (um) { userActionMenu(um.dataset.userMenu, um.dataset.name, um.dataset.role, um.dataset.status); return; }
+
+    var uf = e.target.closest('[data-userflow]');
+    if (uf) {
+      // จากคิวรายงานผู้ใช้ → เปิดโปรไฟล์เพื่อหา userId แล้วเปิดเมนู ใช้ลิงก์ค้นชื่อแทน
+      selectTab('users');
+      setTimeout(function () {
+        var s = document.getElementById('user-search');
+        if (s) { s.value = uf.dataset.name; loadUsers(uf.dataset.name); UI.toast('ค้นหาผู้ใช้ที่ถูกรายงานให้แล้ว กดจุดสามจุดเพื่อจัดการ'); }
+      }, 100);
+      return;
+    }
+
+    var saveCfg = e.target.closest('[data-save-cfg]');
+    if (saveCfg) {
+      var key = saveCfg.dataset.saveCfg;
+      var input = document.querySelector('[data-cfg="' + key + '"]');
+      var value = input.type === 'checkbox' ? String(input.checked) : input.value;
+      EF.api.post('admin.config', { key: key, value: value })
+        .then(function (r) { UI.toast(r.ok ? 'บันทึกแล้ว' : r.error, r.ok ? 'success' : 'error'); });
     }
   });
-
-  // ---------- สมาชิก ----------
-  function loadUsers(q) {
-    EF.api.post('admin.users', { q: q }).then(function (r) {
-      if (!r.ok) return EF.toast(r.error, 'error');
-      var roleTh = { admin: 'ผู้ดูแล', teacher: 'ครู', student: 'นักเรียน' };
-      document.getElementById('user-rows').innerHTML = r.users.map(function (u) {
-        var nextRole = u.role === 'admin' ? 'student' : 'admin';
-        return '<tr class="border-t border-outline-variant">' +
-          '<td class="p-3">' + EF.esc(u.username) + '</td>' +
-          '<td class="p-3">' + EF.esc(u.displayName) + '</td>' +
-          '<td class="p-3">' + (roleTh[u.role] || u.role) + '</td>' +
-          '<td class="p-3">' + (u.postCount || 0) + '</td>' +
-          '<td class="p-3">' + (u.status === 'active' ? 'ใช้งาน' : 'ระงับ') + '</td>' +
-          '<td class="p-3 text-right"><button data-role-user="' + u.id + '" data-role="' + nextRole + '" class="text-label-sm text-secondary hover:underline">' +
-            (u.role === 'admin' ? 'ถอดสิทธิ์ผู้ดูแล' : 'ตั้งเป็นผู้ดูแล') + '</button></td></tr>';
-      }).join('');
-    });
-  }
-  var t;
-  document.getElementById('user-search').addEventListener('input', function (e) {
-    clearTimeout(t); var v = e.target.value; t = setTimeout(function () { loadUsers(v); }, 350);
-  });
-
-  // ---------- ตั้งค่า ----------
-  function loadConfig() {
-    EF.api.post('admin.config', { mode: 'list' }).then(function (r) {
-      if (!r.ok) return EF.toast(r.error, 'error');
-      document.getElementById('config-rows').innerHTML = r.config.map(function (c) {
-        return '<div class="bg-surface-container-lowest border border-outline-variant rounded p-md flex items-center gap-3 flex-wrap">' +
-          '<div class="min-w-0 flex-1"><p class="text-label-md font-semibold">' + EF.esc(c.note || c.key) + '</p>' +
-          '<p class="text-label-sm text-outline">' + EF.esc(c.key) + '</p></div>' +
-          '<input data-cfg="' + EF.esc(c.key) + '" value="' + EF.esc(c.value) + '" class="h-10 px-3 w-56 rounded border border-outline-variant bg-surface text-label-md focus:border-secondary focus:outline-none">' +
-          '<button data-save-cfg="' + EF.esc(c.key) + '" class="px-4 py-2 rounded-lg bg-primary-container text-on-primary text-label-sm">บันทึก</button></div>';
-      }).join('');
-    });
-  }
-  document.addEventListener('click', function (e) {
-    var b = e.target.closest('[data-save-cfg]');
-    if (!b) return;
-    var key = b.dataset.saveCfg;
-    var input = document.querySelector('[data-cfg="' + key + '"]');
-    EF.api.post('admin.config', { key: key, value: input.value })
-      .then(function (r) { EF.toast(r.ok ? 'บันทึกแล้ว' : r.error, r.ok ? 'info' : 'error'); });
-  });
-
-  loadStats();
-  loadQueue();
 })();
 </script>
 </body>

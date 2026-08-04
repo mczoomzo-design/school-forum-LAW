@@ -3,24 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>สร้างกระทู้ใหม่ — EduForum</title>
+<title>ตั้งกระทู้ใหม่ — EduForum</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="assets/js/theme.js"></script>
 <script src="assets/js/config.js"></script>
-<style>
-  body { font-family: 'Sarabun', 'Be Vietnam Pro', sans-serif; }
-  :focus-visible { outline: 2px solid #006a6a; outline-offset: 2px; }
-</style>
+<style>body { font-family: 'Sarabun', 'Be Vietnam Pro', sans-serif; }</style>
 </head>
 <body class="bg-surface text-on-surface">
 
 <div id="site-header"></div>
 
-<main class="max-w-3xl mx-auto px-5 py-lg">
-  <h1 class="font-display text-headline-lg mb-lg">สร้างกระทู้ใหม่</h1>
+<main class="max-w-3xl mx-auto px-5 py-lg page-enter">
+  <div class="flex items-center justify-between gap-3 mb-lg flex-wrap">
+    <h1 class="font-display text-headline-lg">ตั้งกระทู้ใหม่</h1>
+    <p id="draft-note" class="text-label-sm text-outline"></p>
+  </div>
 
   <div class="bg-surface-container-lowest border border-outline-variant rounded p-lg flex flex-col gap-lg">
 
@@ -28,45 +29,47 @@
       <label for="guest-name" class="block text-label-md text-on-surface-variant mb-1">ชื่อที่จะแสดง</label>
       <input id="guest-name" maxlength="40" placeholder="เช่น นักเรียน ม.4/1"
              class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
-      <p class="text-label-sm text-outline mt-1">โพสต์แบบผู้เยี่ยมชม หรือ <a href="login.html" class="text-secondary underline">เข้าสู่ระบบ</a> เพื่อแก้ไขและติดตามกระทู้ของตัวเองได้</p>
+      <p class="text-label-sm text-outline mt-1">โพสต์แบบผู้เยี่ยมชม หรือ <a href="login.html?next=new.html" class="text-secondary underline">เข้าสู่ระบบ</a> เพื่อติดตามกระทู้ของตัวเองได้</p>
     </div>
 
     <div>
       <label for="title" class="block text-label-md text-on-surface-variant mb-1">หัวข้อกระทู้</label>
       <input id="title" maxlength="120" placeholder="ตั้งหัวข้อให้ชัดเจน คนอ่านจะเข้ามาช่วยตอบง่ายขึ้น"
              class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-lg focus:border-secondary focus:outline-none">
-      <p class="text-label-sm text-outline mt-1"><span id="title-count">0</span>/120</p>
+      <p class="text-label-sm text-outline mt-1"><span id="title-count">0</span>/120 ตัวอักษร</p>
     </div>
 
     <div>
-      <label for="category" class="block text-label-md text-on-surface-variant mb-1">หมวดหมู่</label>
-      <select id="category" class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
-        <option value="">กำลังโหลดหมวดหมู่…</option>
-      </select>
+      <span class="block text-label-md text-on-surface-variant mb-2">หมวดหมู่</span>
+      <div id="cat-picker" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
     </div>
 
     <div>
-      <label for="body" class="block text-label-md text-on-surface-variant mb-1">เนื้อหา</label>
+      <div class="flex items-center justify-between mb-1">
+        <label for="body" class="text-label-md text-on-surface-variant">เนื้อหา</label>
+        <button id="btn-preview" class="btn text-label-sm text-secondary hover:underline min-h-11 px-2">ดูตัวอย่าง</button>
+      </div>
       <textarea id="body" rows="12" placeholder="เล่ารายละเอียด สิ่งที่ลองมาแล้ว และสิ่งที่อยากรู้"
                 class="w-full p-3 rounded border border-outline-variant bg-surface text-body-md leading-7 focus:border-secondary focus:outline-none"></textarea>
+      <div id="preview" class="hidden mt-2 p-3 rounded border border-dashed border-outline-variant bg-surface text-body-md leading-7"></div>
     </div>
 
     <div>
       <label for="tags" class="block text-label-md text-on-surface-variant mb-1">แท็ก (ไม่เกิน 5 คำ คั่นด้วยจุลภาค)</label>
       <input id="tags" placeholder="ฟิสิกส์, ม.5, การบ้าน"
              class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">
+      <div id="tag-preview" class="flex gap-2 mt-2 flex-wrap"></div>
     </div>
 
     <div class="bg-surface-container-low rounded p-md text-label-md text-on-surface-variant">
-      <p class="font-semibold text-on-surface mb-1">ก่อนโพสต์</p>
-      <p>ใช้ถ้อยคำสุภาพ ไม่พาดพิงบุคคลในทางเสียหาย ไม่เปิดเผยข้อมูลส่วนตัวของผู้อื่น เช่น เลขประจำตัวประชาชน เบอร์โทร หรือที่อยู่</p>
+      <p class="font-semibold text-on-surface mb-1">ก่อนเผยแพร่</p>
+      <p>ใช้ถ้อยคำสุภาพ ไม่พาดพิงบุคคลในทางเสียหาย และไม่เปิดเผยข้อมูลส่วนตัวของผู้อื่น เช่น เลขประจำตัวประชาชน เบอร์โทร หรือที่อยู่</p>
     </div>
 
     <div class="flex items-center justify-end gap-3">
-      <a href="index.html" class="px-5 py-3 rounded-lg text-label-md text-on-surface-variant hover:text-primary">ยกเลิก</a>
-      <button id="btn-post" class="px-6 py-3 rounded-lg bg-secondary text-on-secondary text-label-md hover:opacity-90 disabled:opacity-50">
-        เผยแพร่กระทู้
-      </button>
+      <button id="btn-clear" class="btn px-5 py-3 min-h-11 rounded-lg text-label-md text-on-surface-variant hover:bg-surface-container">ล้างร่าง</button>
+      <a href="index.html" class="btn px-5 py-3 min-h-11 flex items-center rounded-lg text-label-md text-on-surface-variant hover:bg-surface-container">ยกเลิก</a>
+      <button id="btn-post" class="btn px-6 py-3 min-h-11 rounded-lg bg-secondary text-on-secondary text-label-md hover:opacity-90 disabled:opacity-50">เผยแพร่กระทู้</button>
     </div>
   </div>
 </main>
@@ -74,57 +77,109 @@
 <div id="site-footer"></div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/ui.js"></script>
 <script>
 (function () {
-  EF.renderHeader('browse'); EF.renderFooter();
+  UI.renderHeader('new');
+  UI.renderFooter();
 
-  document.getElementById('title').addEventListener('input', function (e) {
-    document.getElementById('title-count').textContent = e.target.value.length;
+  var elTitle = document.getElementById('title');
+  var elBody = document.getElementById('body');
+  var elTags = document.getElementById('tags');
+  var chosen = EF.param('category');
+
+  var draft = EF.autosave('new-thread', { title: elTitle, body: elBody, tags: elTags });
+  if (draft.hasSaved) document.getElementById('draft-note').textContent = 'กู้ร่างที่ค้างไว้ให้แล้ว';
+
+  elTitle.addEventListener('input', function () {
+    document.getElementById('title-count').textContent = elTitle.value.length;
+  });
+  document.getElementById('title-count').textContent = elTitle.value.length;
+
+  elTags.addEventListener('input', renderTags);
+  function renderTags() {
+    var list = elTags.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 5);
+    document.getElementById('tag-preview').innerHTML = list.map(function (t) { return EF.badge('#' + t, '#006a6a'); }).join('');
+  }
+  renderTags();
+
+  document.getElementById('btn-preview').addEventListener('click', function () {
+    var box = document.getElementById('preview');
+    var showing = !box.classList.contains('hidden');
+    box.classList.toggle('hidden', showing);
+    this.textContent = showing ? 'ดูตัวอย่าง' : 'ซ่อนตัวอย่าง';
+    if (!showing) box.innerHTML = EF.textToHtml(EF.esc(elBody.value)) || '<span class="text-outline">ยังไม่มีเนื้อหา</span>';
   });
 
-  EF.api.get('bootstrap').then(function (r) {
-    if (!r.ok) return EF.toast(r.error, 'error');
-    var sel = document.getElementById('category');
-    sel.innerHTML = '<option value="">เลือกหมวดหมู่</option>' +
-      r.categories.map(function (c) { return '<option value="' + c.id + '">' + EF.esc(c.name) + '</option>'; }).join('');
-    var pre = EF.param('category');
-    if (pre) sel.value = pre;
+  document.getElementById('btn-clear').addEventListener('click', function () {
+    elTitle.value = ''; elBody.value = ''; elTags.value = '';
+    draft.clear(); renderTags();
+    document.getElementById('title-count').textContent = '0';
+    document.getElementById('draft-note').textContent = '';
+    UI.toast('ล้างร่างแล้ว');
+  });
+
+  UI.bootstrap().then(function (r) {
+    if (!r.ok) return UI.toast(r.error, 'error');
+    UI.renderHeader('new'); UI.renderFooter();
+
+    document.getElementById('cat-picker').innerHTML = r.categories.map(function (c) {
+      return '<button type="button" data-cat="' + c.id + '" ' +
+        'class="cat-opt btn text-left px-3 py-3 min-h-11 rounded border border-outline-variant hover:border-secondary transition-colors">' +
+        '<span class="flex items-center gap-2"><span class="size-2.5 rounded-full shrink-0" style="background:' + c.color + '" aria-hidden="true"></span>' +
+        '<span class="text-label-md truncate">' + EF.esc(c.name) + '</span></span>' +
+        '<span class="block text-label-sm text-outline mt-0.5 truncate">' + EF.esc(c.description || '') + '</span></button>';
+    }).join('');
+    if (chosen) markCategory(chosen);
 
     if (!EF.Auth.isLoggedIn()) {
       if (r.config.allowGuestThread) {
         document.getElementById('guest-name-box').classList.remove('hidden');
       } else {
-        EF.toast('ต้องเข้าสู่ระบบก่อนตั้งกระทู้', 'warn');
+        UI.toast('ต้องเข้าสู่ระบบก่อนตั้งกระทู้', 'warn');
         setTimeout(function () { location.href = 'login.html?next=new.html'; }, 1200);
       }
     }
-  }).catch(function (e) { EF.toast(e.message, 'error'); });
+  }).catch(function (e) { UI.toast(e.message, 'error'); });
+
+  document.getElementById('cat-picker').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-cat]');
+    if (b) markCategory(b.dataset.cat);
+  });
+
+  function markCategory(id) {
+    chosen = id;
+    document.querySelectorAll('.cat-opt').forEach(function (b) {
+      var on = b.dataset.cat === id;
+      b.classList.toggle('border-secondary', on);
+      b.classList.toggle('bg-secondary-container', on);
+      b.setAttribute('aria-pressed', on);
+    });
+  }
 
   var btn = document.getElementById('btn-post');
   btn.addEventListener('click', function () {
-    var title = document.getElementById('title').value.trim();
-    var body = document.getElementById('body').value.trim();
-    var categoryId = document.getElementById('category').value;
-    if (title.length < 5) return EF.toast('หัวข้อสั้นเกินไป (อย่างน้อย 5 ตัวอักษร)', 'warn');
-    if (!categoryId) return EF.toast('เลือกหมวดหมู่ก่อน', 'warn');
-    if (body.length < 10) return EF.toast('เนื้อหาสั้นเกินไป (อย่างน้อย 10 ตัวอักษร)', 'warn');
+    var title = elTitle.value.trim(), body = elBody.value.trim();
+    if (title.length < 5) { UI.toast('หัวข้อสั้นเกินไป ใส่อย่างน้อย 5 ตัวอักษร', 'warn'); elTitle.focus(); return; }
+    if (!chosen) { UI.toast('เลือกหมวดหมู่ก่อนเผยแพร่', 'warn'); return; }
+    if (body.length < 10) { UI.toast('เนื้อหาสั้นเกินไป ใส่อย่างน้อย 10 ตัวอักษร', 'warn'); elBody.focus(); return; }
 
     btn.disabled = true; btn.textContent = 'กำลังเผยแพร่…';
     EF.api.post('createThread', {
-      title: title, body: body, categoryId: categoryId,
-      tags: document.getElementById('tags').value,
+      title: title, body: body, categoryId: chosen, tags: elTags.value,
       guestName: (document.getElementById('guest-name') || {}).value || ''
     }).then(function (r) {
-      if (!r.ok) { btn.disabled = false; btn.textContent = 'เผยแพร่กระทู้'; return EF.toast(r.error, 'error'); }
+      if (!r.ok) { btn.disabled = false; btn.textContent = 'เผยแพร่กระทู้'; return UI.toast(r.error, 'error'); }
+      draft.clear();
       if (r.pending) {
-        EF.toast('ส่งกระทู้แล้ว รอผู้ดูแลอนุมัติก่อนแสดงผล');
+        UI.toast('ส่งกระทู้แล้ว รอผู้ดูแลอนุมัติก่อนแสดงผล', 'success');
         setTimeout(function () { location.href = 'index.html'; }, 1600);
       } else {
         location.href = 'thread.html?id=' + encodeURIComponent(r.id);
       }
     }).catch(function (e) {
       btn.disabled = false; btn.textContent = 'เผยแพร่กระทู้';
-      EF.toast(e.message, 'error');
+      UI.toast(e.message, 'error');
     });
   });
 })();

@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>โปรไฟล์ — EduForum</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="assets/js/theme.js"></script>
+<script src="assets/js/config.js"></script>
+<style>body { font-family: 'Sarabun', 'Be Vietnam Pro', sans-serif; }</style>
+</head>
+<body class="bg-surface text-on-surface">
+
+<div id="site-header"></div>
+
+<main class="max-w-3xl mx-auto px-5 py-lg page-enter">
+  <div id="profile-head"><div class="skeleton h-40 rounded"></div></div>
+
+  <div class="relative border-b border-outline-variant mt-lg mb-md">
+    <div id="tabs" class="flex gap-1 overflow-x-auto" role="tablist"></div>
+    <span id="tab-bar" class="tab-underline absolute bottom-0 left-0 h-0.5 bg-secondary" style="width:0"></span>
+  </div>
+
+  <div id="tab-body"></div>
+</main>
+
+<div id="site-footer"></div>
+
+<script src="assets/js/app.js"></script>
+<script src="assets/js/ui.js"></script>
+<script>
+(function () {
+  UI.renderHeader('profile');
+  UI.renderFooter();
+  UI.bootstrap().then(function () { UI.renderHeader('profile'); UI.renderFooter(); });
+
+  var viewUser = EF.param('u');                       // ดูโปรไฟล์คนอื่น
+  var isSelf = !viewUser || (EF.Auth.user && EF.Auth.user.username === viewUser);
+  if (!viewUser && !EF.Auth.requireLogin('profile.html')) return;
+
+  var data = null;
+  var pendingAvatar = null;   // เก็บค่ารูปใหม่ก่อนบันทึก
+
+  isSelf ? loadSelf() : loadPublic(viewUser);
+
+  // ============ โปรไฟล์ตัวเอง ============
+  function loadSelf() {
+    EF.api.post('profile.me', {}).then(function (r) {
+      if (!r.ok) return UI.toast(r.error, 'error');
+      data = r;
+      EF.Auth.patch({ id: r.user.id, username: r.user.username, displayName: r.user.displayName, role: r.user.role, avatar: r.user.avatar });
+      renderHead(r.user, r.stats, true);
+      buildTabs(['edit', 'threads', 'bookmarks', 'security']);
+    }).catch(function (e) { UI.toast(e.message, 'error'); });
+  }
+
+  // ============ โปรไฟล์คนอื่น ============
+  function loadPublic(username) {
+    EF.api.get('profile', { username: username }).then(function (r) {
+      if (!r.ok) {
+        document.getElementById('profile-head').innerHTML =
+          UI.emptyState('ไม่พบผู้ใช้นี้', r.error, 'กลับหน้าฟีด', 'index.html');
+        return;
+      }
+      data = r;
+      renderHead(r.user, r.stats, false);
+      buildTabs(['threads']);
+    }).catch(function (e) { UI.toast(e.message, 'error'); });
+  }
+
+  // ---- หัวโปรไฟล์ ----
+  function renderHead(u, stats, self) {
+    var restricted = u.suspended ? EF.badge('ถูกระงับการโพสต์', '#ba1a1a') : '';
+    document.getElementById('profile-head').innerHTML =
+      '<div class="bg-surface-container-lowest border border-outline-variant rounded overflow-hidden">' +
+        '<div class="h-24 bg-primary"></div>' +
+        '<div class="px-lg pb-lg -mt-12">' +
+          '<div class="flex items-end justify-between gap-3 flex-wrap">' +
+            '<div class="ring-4 ring-surface-container-lowest rounded-full">' + EF.avatar(u, 'xl') + '</div>' +
+            (self
+              ? '<button id="btn-edit-quick" class="btn px-4 py-2.5 min-h-11 rounded-lg border border-outline-variant text-label-md hover:border-secondary">แก้ไขโปรไฟล์</button>'
+              : (EF.Auth.isLoggedIn() ? '<button id="btn-report-user" class="btn px-4 py-2.5 min-h-11 rounded-lg border border-outline-variant text-label-md text-on-surface-variant hover:text-error hover:border-error">รายงานผู้ใช้</button>' : '')) +
+          '</div>' +
+          '<div class="mt-3 flex items-center gap-2 flex-wrap">' +
+            '<h1 class="font-display text-headline-md">' + EF.esc(u.displayName) + '</h1>' +
+            EF.roleBadge(u.role) + restricted +
+          '</div>' +
+          '<p class="text-label-md text-outline">@' + EF.esc(u.username) + ' · เข้าร่วมเมื่อ ' + EF.fullDate(u.createdAt) + '</p>' +
+          (u.bio ? '<p class="text-body-md text-on-surface mt-3 break-words">' + EF.esc(u.bio) + '</p>' : '') +
+          '<div class="flex gap-lg mt-md pt-md border-t border-outline-variant">' +
+            statCell(stats.threads, 'กระทู้') + statCell(stats.replies, 'ความคิดเห็น') + statCell(stats.likes, 'ถูกใจที่ได้รับ') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var q = document.getElementById('btn-edit-quick');
+    if (q) q.addEventListener('click', function () { selectTab('edit'); });
+    var rep = document.getElementById('btn-report-user');
+    if (rep) rep.addEventListener('click', function () { UI.reportDialog('user', u.username, '@' + u.username); });
+  }
+
+  function statCell(n, label) {
+    return '<div><p class="font-display text-title-lg text-primary-container">' + (n || 0) + '</p>' +
+      '<p class="text-label-sm text-on-surface-variant">' + label + '</p></div>';
+  }
+
+  // ---- แท็บ ----
+  var TAB_LABELS = { edit: 'แก้ไขโปรไฟล์', threads: 'กระทู้', bookmarks: 'บันทึกไว้', security: 'รหัสผ่าน' };
+  var tabs = [];
+
+  function buildTabs(list) {
+    tabs = list;
+    document.getElementById('tabs').innerHTML = list.map(function (t, i) {
+      return '<button role="tab" data-tab="' + t + '" aria-selected="' + (i === 0) + '" ' +
+        'class="btn px-4 py-3 min-h-11 text-label-md whitespace-nowrap ' +
+        (i === 0 ? 'text-primary-container font-semibold' : 'text-on-surface-variant hover:text-on-surface') + '">' +
+        TAB_LABELS[t] + '</button>';
+    }).join('');
+    selectTab(list[0]);
+  }
+
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-tab]');
+    if (b) selectTab(b.dataset.tab);
+  });
+
+  function selectTab(name) {
+    document.querySelectorAll('#tabs [data-tab]').forEach(function (b) {
+      var on = b.dataset.tab === name;
+      b.setAttribute('aria-selected', on);
+      b.className = 'btn px-4 py-3 min-h-11 text-label-md whitespace-nowrap ' +
+        (on ? 'text-primary-container font-semibold' : 'text-on-surface-variant hover:text-on-surface');
+    });
+    moveBar();
+    render(name);
+  }
+
+  function moveBar() {
+    var active = document.querySelector('#tabs [aria-selected="true"]');
+    var bar = document.getElementById('tab-bar');
+    if (!active || !bar) return;
+    bar.style.width = active.offsetWidth + 'px';
+    bar.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+  }
+  window.addEventListener('resize', moveBar);
+
+  function render(name) {
+    var body = document.getElementById('tab-body');
+    body.className = 'page-enter';
+    if (name === 'edit') return renderEdit(body);
+    if (name === 'security') return renderSecurity(body);
+    if (name === 'bookmarks') return renderBookmarks(body);
+    return renderThreads(body);
+  }
+
+  // ---- แก้ไขโปรไฟล์ ----
+  function renderEdit(body) {
+    var u = data.user;
+    body.innerHTML =
+      '<div class="flex flex-col gap-lg">' +
+        // รูปโปรไฟล์
+        '<section class="bg-surface-container-lowest border border-outline-variant rounded p-lg">' +
+          '<h2 class="font-display text-title-lg mb-md">รูปโปรไฟล์</h2>' +
+          '<div class="flex items-center gap-lg flex-wrap">' +
+            '<div id="avatar-preview">' + EF.avatar(u, 'xl') + '</div>' +
+            '<div class="flex flex-col gap-2">' +
+              '<label class="btn inline-flex items-center gap-2 px-4 py-2.5 min-h-11 rounded-lg bg-primary-container text-on-primary text-label-md cursor-pointer hover:opacity-90 w-fit">' +
+                '<span class="material-symbols-outlined text-[18px]">upload</span> อัปโหลดรูป' +
+                '<input id="avatar-file" type="file" accept="image/*" class="hidden"></label>' +
+              '<button id="avatar-clear" class="btn px-4 py-2.5 min-h-11 rounded-lg text-label-md text-on-surface-variant hover:bg-surface-container w-fit">ใช้ตัวอักษรย่อแทน</button>' +
+              '<p class="text-label-sm text-outline">รองรับ JPG PNG WebP ระบบจะย่อรูปให้อัตโนมัติ</p>' +
+            '</div>' +
+          '</div>' +
+          '<p class="text-label-md text-on-surface-variant mt-md mb-2">หรือเลือกสีสำเร็จรูป</p>' +
+          '<div id="preset-row" class="flex gap-2 flex-wrap"></div>' +
+        '</section>' +
+
+        // ข้อมูลสาธารณะ
+        '<section class="bg-surface-container-lowest border border-outline-variant rounded p-lg">' +
+          '<h2 class="font-display text-title-lg mb-1">ข้อมูลสาธารณะ</h2>' +
+          '<p class="text-label-sm text-outline mb-md flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">public</span> ทุกคนที่เข้าชมโปรไฟล์เห็นได้</p>' +
+          field('ชื่อที่แสดง', 'ef-displayName', u.displayName, 'ชื่อที่เพื่อน ๆ เห็น', 40) +
+          '<div class="mt-md"><label for="ef-bio" class="block text-label-md text-on-surface-variant mb-1">แนะนำตัวสั้น ๆ</label>' +
+            '<textarea id="ef-bio" rows="3" maxlength="200" class="w-full p-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">' + EF.esc(u.bio || '') + '</textarea></div>' +
+        '</section>' +
+
+        // ข้อมูลส่วนตัว
+        '<section class="bg-surface-container-lowest border border-outline-variant rounded p-lg">' +
+          '<h2 class="font-display text-title-lg mb-1">ข้อมูลส่วนตัว</h2>' +
+          '<p class="text-label-sm text-outline mb-md flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">lock</span> เห็นเฉพาะคุณและผู้ดูแลระบบ คนอื่นไม่เห็น</p>' +
+          '<div class="grid sm:grid-cols-2 gap-md">' +
+            field('ชื่อเล่น', 'ef-nickname', u.nickname, 'เช่น น้องมาย', 40) +
+            field('ชื่อจริง', 'ef-realName', u.realName, 'ชื่อ-นามสกุล', 80) +
+            field('ชั้นเรียน', 'ef-classroom', u.classroom, 'เช่น ม.5/2', 30) +
+            field('ช่องทางติดต่อ', 'ef-contact', u.contact, 'อีเมลหรือไลน์ (ถ้าต้องการ)', 80) +
+          '</div>' +
+        '</section>' +
+
+        '<div class="flex justify-end gap-3">' +
+          '<button id="btn-save-profile" class="btn px-6 py-3 min-h-11 rounded-lg bg-secondary text-on-secondary text-label-md hover:opacity-90 disabled:opacity-50">บันทึกการเปลี่ยนแปลง</button>' +
+        '</div>' +
+      '</div>';
+
+    // ปุ่มสีสำเร็จรูป
+    var row = '';
+    for (var i = 0; i < EF.presetCount(); i++) {
+      row += '<button type="button" data-preset="' + i + '" class="btn size-11 rounded-full" style="background:' + EF.presetGradient(i) + '" aria-label="เลือกสีที่ ' + (i + 1) + '"></button>';
+    }
+    document.getElementById('preset-row').innerHTML = row;
+
+    // อัปโหลด + ย่อรูป
+    document.getElementById('avatar-file').addEventListener('change', function (e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      if (file.size > 6 * 1024 * 1024) return UI.toast('ไฟล์ใหญ่เกิน 6MB เลือกรูปที่เล็กลง', 'warn');
+      resizeImage(file, 256, function (dataUrl) {
+        pendingAvatar = dataUrl;
+        document.getElementById('avatar-preview').innerHTML = EF.avatar({ displayName: data.user.displayName, avatar: dataUrl, role: data.user.role }, 'xl');
+      });
+    });
+
+    document.getElementById('avatar-clear').addEventListener('click', function () {
+      pendingAvatar = '';
+      document.getElementById('avatar-preview').innerHTML = EF.avatar({ displayName: data.user.displayName, avatar: '', role: data.user.role }, 'xl');
+    });
+
+    document.getElementById('preset-row').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-preset]');
+      if (!b) return;
+      pendingAvatar = 'p:' + b.dataset.preset;
+      document.getElementById('avatar-preview').innerHTML = EF.avatar({ displayName: data.user.displayName, avatar: pendingAvatar, role: data.user.role }, 'xl');
+    });
+
+    document.getElementById('btn-save-profile').addEventListener('click', saveProfile);
+  }
+
+  function field(label, id, value, ph, max) {
+    return '<div><label for="' + id + '" class="block text-label-md text-on-surface-variant mb-1">' + label + '</label>' +
+      '<input id="' + id + '" value="' + EF.esc(value || '') + '" maxlength="' + max + '" placeholder="' + ph + '" ' +
+      'class="w-full h-12 px-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none"></div>';
+  }
+
+  function saveProfile() {
+    var btn = document.getElementById('btn-save-profile');
+    var payload = {
+      displayName: val('ef-displayName'), bio: val('ef-bio'),
+      nickname: val('ef-nickname'), realName: val('ef-realName'),
+      classroom: val('ef-classroom'), contact: val('ef-contact')
+    };
+    if (pendingAvatar !== null) payload.avatar = pendingAvatar;
+
+    btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+    EF.api.post('profile.update', payload).then(function (r) {
+      btn.disabled = false; btn.textContent = 'บันทึกการเปลี่ยนแปลง';
+      if (!r.ok) return UI.toast(r.error, 'error');
+      data.user = r.user;
+      pendingAvatar = null;
+      EF.Auth.patch({ id: r.user.id, username: r.user.username, displayName: r.user.displayName, role: r.user.role, avatar: r.user.avatar });
+      renderHead(r.user, data.stats, true);
+      UI.renderHeader('profile');
+      UI.toast('บันทึกโปรไฟล์แล้ว', 'success');
+    }).catch(function (e) {
+      btn.disabled = false; btn.textContent = 'บันทึกการเปลี่ยนแปลง';
+      UI.toast(e.message, 'error');
+    });
+  }
+
+  function val(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+
+  // ---- ความปลอดภัย / รหัสผ่าน ----
+  function renderSecurity(body) {
+    body.innerHTML =
+      '<section class="bg-surface-container-lowest border border-outline-variant rounded p-lg max-w-lg">' +
+        '<h2 class="font-display text-title-lg mb-md">เปลี่ยนรหัสผ่าน</h2>' +
+        '<div class="flex flex-col gap-md">' +
+          pwField('รหัสผ่านปัจจุบัน', 'pw-old') +
+          pwField('รหัสผ่านใหม่ (อย่างน้อย 6 ตัว)', 'pw-new') +
+          pwField('ยืนยันรหัสผ่านใหม่', 'pw-new2') +
+          '<button id="btn-save-pw" class="btn h-12 rounded-lg bg-primary-container text-on-primary text-label-md hover:opacity-90 disabled:opacity-50">บันทึกรหัสผ่านใหม่</button>' +
+          '<p class="text-label-sm text-outline">เปลี่ยนแล้วระบบจะออกจากระบบทุกอุปกรณ์เพื่อความปลอดภัย</p>' +
+        '</div>' +
+      '</section>';
+
+    document.getElementById('btn-save-pw').addEventListener('click', function () {
+      var btn = this;
+      var oldP = val('pw-old'), newP = val('pw-new'), new2 = val('pw-new2');
+      if (!oldP || !newP) return UI.toast('กรอกรหัสผ่านให้ครบ', 'warn');
+      if (newP.length < 6) return UI.toast('รหัสผ่านใหม่ต้องยาวอย่างน้อย 6 ตัว', 'warn');
+      if (newP !== new2) return UI.toast('ยืนยันรหัสผ่านใหม่ไม่ตรงกัน', 'warn');
+
+      btn.disabled = true; btn.textContent = 'กำลังบันทึก…';
+      EF.api.post('profile.password', { oldPassword: oldP, newPassword: newP }).then(function (r) {
+        if (!r.ok) { btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่'; return UI.toast(r.error, 'error'); }
+        UI.toast('เปลี่ยนรหัสผ่านแล้ว กำลังพาไปเข้าสู่ระบบใหม่', 'success');
+        EF.Auth.clear();
+        setTimeout(function () { location.href = 'login.html'; }, 1500);
+      }).catch(function (e) { btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่'; UI.toast(e.message, 'error'); });
+    });
+  }
+
+  function pwField(label, id) {
+    return '<div><label for="' + id + '" class="block text-label-md text-on-surface-variant mb-1">' + label + '</label>' +
+      '<div class="relative"><input id="' + id + '" type="password" class="w-full h-12 px-3 pr-11 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none">' +
+      '<button type="button" data-toggle="' + id + '" class="btn absolute right-1 top-1 size-10 rounded text-on-surface-variant hover:bg-surface-container" aria-label="แสดงรหัสผ่าน">' +
+      '<span class="material-symbols-outlined text-[20px]">visibility</span></button></div></div>';
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-toggle]');
+    if (!t) return;
+    var input = document.getElementById(t.dataset.toggle);
+    var show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    t.querySelector('.material-symbols-outlined').textContent = show ? 'visibility_off' : 'visibility';
+  });
+
+  // ---- กระทู้ของฉัน / ของผู้ใช้ ----
+  function renderThreads(body) {
+    var list = data.threads || [];
+    if (!list.length) {
+      body.innerHTML = UI.emptyState(isSelf ? 'คุณยังไม่ได้ตั้งกระทู้' : 'ยังไม่มีกระทู้',
+        isSelf ? 'เริ่มกระทู้แรกของคุณได้เลย' : 'ผู้ใช้รายนี้ยังไม่ได้ตั้งกระทู้',
+        isSelf ? 'ตั้งกระทู้ใหม่' : '', isSelf ? 'new.html' : '');
+      return;
+    }
+    body.innerHTML = '<div class="flex flex-col gap-3">' + list.map(function (t) {
+      var statusTag = t.status && t.status !== 'active'
+        ? EF.badge(t.status === 'pending' ? 'รออนุมัติ' : (t.status === 'hidden' ? 'ถูกซ่อน' : 'ถูกนำออก'), '#b45309')
+        : '';
+      return '<article class="reveal bg-surface-container-lowest border border-outline-variant rounded p-md">' +
+        '<div class="flex items-start justify-between gap-2">' +
+          '<a href="thread.html?id=' + encodeURIComponent(t.id) + '" class="font-display text-title-lg text-primary-container hover:text-secondary break-words">' + EF.esc(t.title) + '</a>' +
+          statusTag +
+        '</div>' +
+        '<p class="text-body-md text-on-surface-variant mt-1 line-clamp-2">' + EF.esc(t.excerpt) + '</p>' +
+        '<div class="flex gap-4 mt-2 text-label-sm text-outline">' +
+          '<span>' + EF.timeAgo(t.createdAt) + '</span>' +
+          '<span>' + t.replyCount + ' ตอบ</span><span>' + t.likeCount + ' ถูกใจ</span><span>' + t.views + ' อ่าน</span>' +
+        '</div></article>';
+    }).join('') + '</div>';
+    UI.reveal(body);
+  }
+
+  // ---- กระทู้ที่บันทึกไว้ ----
+  function renderBookmarks(body) {
+    body.innerHTML = UI.skeletonList(3);
+    EF.api.post('bookmarks', {}).then(function (r) {
+      if (!r.ok) return UI.toast(r.error, 'error');
+      if (!r.threads.length) {
+        body.innerHTML = UI.emptyState('ยังไม่มีกระทู้ที่บันทึกไว้', 'กดไอคอนบันทึกในกระทู้เพื่อเก็บไว้อ่านทีหลัง', 'ไปหน้าฟีด', 'index.html');
+        return;
+      }
+      body.innerHTML = '<div class="flex flex-col gap-3">' + r.threads.map(function (t) { return UI.threadCard(t, {}); }).join('') + '</div>';
+      UI.reveal(body);
+    });
+  }
+
+  // ---- ย่อรูปด้วย canvas ก่อนส่ง ให้ base64 เล็กพอเก็บในเซลล์ชีต ----
+  function resizeImage(file, maxSize, cb) {
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        var out = canvas.toDataURL('image/jpeg', 0.82);
+        if (out.length > 45000) out = canvas.toDataURL('image/jpeg', 0.62);
+        cb(out);
+      };
+      img.onerror = function () { UI.toast('เปิดรูปไม่สำเร็จ ลองไฟล์อื่น', 'error'); };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+})();
+</script>
+</body>
+</html>

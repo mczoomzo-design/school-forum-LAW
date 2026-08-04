@@ -3,85 +3,72 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>EduForum — ฟีดหลัก</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
+<title>EduForum — เว็บบอร์ดโรงเรียน</title>
+<meta name="description" content="พื้นที่ถาม-ตอบและพูดคุยของนักเรียนและครูในโรงเรียน">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/app.css">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="assets/js/theme.js"></script>
 <script src="assets/js/config.js"></script>
-<style>
-  body { font-family: 'Sarabun', 'Be Vietnam Pro', sans-serif; }
-  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400; }
-  .thread-card:hover { border-color: #006a6a; box-shadow: 0 4px 12px rgba(0,35,102,.08); }
-  :focus-visible { outline: 2px solid #006a6a; outline-offset: 2px; }
-</style>
+<style>body { font-family: 'Sarabun', 'Be Vietnam Pro', sans-serif; }</style>
 </head>
 <body class="bg-surface text-on-surface">
 
+<a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:bg-primary focus:text-on-primary focus:px-4 focus:py-2 focus:rounded">ข้ามไปเนื้อหาหลัก</a>
 <div id="site-header"></div>
 
-<main class="max-w-container mx-auto px-5 py-lg">
+<main id="main" class="max-w-container mx-auto px-5 py-lg page-enter">
 
-  <!-- แถบค้นหา + ปุ่มตั้งกระทู้ -->
-  <section class="mb-lg flex flex-col sm:flex-row gap-3">
-    <div class="relative flex-1">
-      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-      <input id="search" type="search" placeholder="ค้นหากระทู้ หัวข้อ หรือแท็ก…"
-             class="w-full h-12 pl-11 pr-4 rounded border border-outline-variant bg-surface-container-lowest text-body-md focus:border-secondary focus:outline-none">
+  <!-- ค้นหา + ทางลัด -->
+  <section class="mb-lg">
+    <div class="flex flex-col sm:flex-row gap-3">
+      <div class="relative flex-1">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline pointer-events-none" aria-hidden="true">search</span>
+        <label for="search" class="sr-only">ค้นหากระทู้</label>
+        <input id="search" type="search" placeholder="ค้นหากระทู้ หัวข้อ หรือแท็ก…"
+               class="w-full h-12 pl-11 pr-4 rounded border border-outline-variant bg-surface-container-lowest text-body-md transition-colors focus:border-secondary focus:outline-none">
+      </div>
+      <a href="new.html" class="btn h-12 px-5 rounded-lg bg-secondary text-on-secondary flex items-center justify-center gap-2 text-label-md hover:opacity-90">
+        <span class="material-symbols-outlined text-[20px]" aria-hidden="true">edit_square</span> ตั้งกระทู้ใหม่
+      </a>
     </div>
-    <a href="new.html" class="h-12 px-5 rounded-lg bg-secondary text-on-secondary flex items-center justify-center gap-2 text-label-md hover:opacity-90">
-      <span class="material-symbols-outlined text-[20px]">edit_square</span> ตั้งกระทู้ใหม่
-    </a>
+
+    <div id="chip-row" class="flex gap-2 mt-3 overflow-x-auto pb-1" role="group" aria-label="กรองตามหมวดหมู่"></div>
   </section>
 
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-lg">
 
-    <!-- แถบข้าง: หมวดหมู่ -->
-    <aside class="lg:col-span-4 lg:order-2">
-      <div class="bg-surface-container-lowest border border-outline-variant rounded p-md mb-md">
-        <h2 class="font-display text-headline-md text-primary mb-md">หมวดหมู่ (Categories)</h2>
-        <ul id="category-list" class="flex flex-col gap-1">
-          <li class="text-label-md text-on-surface-variant py-2">กำลังโหลด…</li>
-        </ul>
+    <!-- แถบข้าง -->
+    <aside class="lg:col-span-4 lg:order-2 flex flex-col gap-md">
+      <div class="bg-surface-container-lowest border border-outline-variant rounded p-md">
+        <h2 class="font-display text-title-lg text-on-surface mb-md flex items-center gap-2">
+          <span class="material-symbols-outlined text-secondary text-[20px]" aria-hidden="true">local_fire_department</span>
+          หัวข้อที่กำลังมาแรง
+        </h2>
+        <ol id="trending-list" class="flex flex-col gap-3 text-label-md"></ol>
       </div>
 
       <div class="bg-surface-container-lowest border border-outline-variant rounded p-md">
-        <h2 class="font-display text-title-lg text-on-surface mb-md flex items-center gap-2">
-          <span class="material-symbols-outlined text-secondary text-[20px]">local_fire_department</span>
-          หัวข้อที่กำลังมาแรง
-        </h2>
-        <ol id="trending-list" class="flex flex-col gap-3 text-label-md">
-          <li class="text-on-surface-variant">กำลังโหลด…</li>
-        </ol>
+        <h2 class="font-display text-title-lg text-on-surface mb-md">หมวดหมู่</h2>
+        <ul id="category-list" class="flex flex-col gap-1"></ul>
       </div>
+
+      <div id="stat-strip" class="bg-primary text-on-primary rounded p-md"></div>
     </aside>
 
     <!-- รายการกระทู้ -->
     <section class="lg:col-span-8 lg:order-1">
-      <div class="flex items-center justify-between mb-md gap-3 flex-wrap">
-        <h2 id="list-title" class="font-display text-headline-md text-on-surface">โพสต์ล่าสุด</h2>
-        <label class="flex items-center gap-2 text-label-md text-on-surface-variant">
-          เรียงโดย:
-          <select id="sort" class="h-9 px-2 rounded border border-outline-variant bg-surface-container-lowest text-label-md focus:border-secondary focus:outline-none">
-            <option value="latest">ล่าสุด</option>
-            <option value="popular">ยอดนิยม</option>
-            <option value="trending">กำลังมาแรง</option>
-          </select>
-        </label>
+      <div class="relative border-b border-outline-variant mb-md">
+        <div id="sort-tabs" class="flex gap-1 overflow-x-auto" role="tablist" aria-label="เรียงลำดับกระทู้"></div>
+        <span id="tab-bar" class="tab-underline absolute bottom-0 left-0 h-0.5 bg-secondary" style="width:0"></span>
       </div>
 
-      <div id="active-filter" class="mb-md hidden"></div>
-
-      <div id="thread-list" class="flex flex-col gap-3">
-        <div class="animate-pulse bg-surface-container-lowest border border-outline-variant rounded p-md h-24"></div>
-        <div class="animate-pulse bg-surface-container-lowest border border-outline-variant rounded p-md h-24"></div>
-        <div class="animate-pulse bg-surface-container-lowest border border-outline-variant rounded p-md h-24"></div>
-      </div>
+      <div id="thread-list" class="flex flex-col gap-3"></div>
 
       <div class="mt-lg text-center">
-        <button id="load-more" class="hidden px-6 py-3 rounded-lg border border-secondary text-secondary text-label-md hover:bg-secondary-container">
+        <button id="load-more" class="btn hidden px-6 py-3 min-h-11 rounded-lg border border-secondary text-secondary text-label-md hover:bg-secondary-container">
           โหลดเพิ่มเติม
         </button>
       </div>
@@ -93,109 +80,127 @@
 <div id="site-footer"></div>
 
 <script src="assets/js/app.js"></script>
+<script src="assets/js/ui.js"></script>
 <script>
 (function () {
+  var SORTS = [
+    { key: 'latest', label: 'ล่าสุด' },
+    { key: 'trending', label: 'กำลังมาแรง' },
+    { key: 'popular', label: 'ยอดนิยม' },
+    { key: 'unanswered', label: 'ยังไม่มีคนตอบ' }
+  ];
   var state = { page: 1, sort: EF.param('sort') || 'latest', category: EF.param('category') || '', q: '', cats: {} };
-  document.getElementById('sort').value = state.sort;
 
-  EF.renderHeader(state.sort === 'trending' ? 'trending' : (state.sort === 'latest' ? 'latest' : 'browse'));
-  EF.renderFooter();
+  UI.renderHeader(state.sort === 'trending' ? 'trending' : (state.sort === 'unanswered' ? 'unanswered' : 'browse'));
+  UI.renderFooter();
 
-  function catBadge(id) {
-    var c = state.cats[id];
-    return c ? EF.badge(c.name, c.color) : '';
+  // ---- แท็บเรียงลำดับ พร้อมเส้นใต้ที่เลื่อนตาม ----
+  function renderTabs() {
+    document.getElementById('sort-tabs').innerHTML = SORTS.map(function (s) {
+      var on = s.key === state.sort;
+      return '<button role="tab" aria-selected="' + on + '" data-sort="' + s.key + '"' +
+        ' class="btn px-4 py-3 min-h-11 text-label-md whitespace-nowrap ' +
+        (on ? 'text-primary-container font-semibold' : 'text-on-surface-variant hover:text-on-surface') + '">' + s.label + '</button>';
+    }).join('');
+    moveBar();
   }
 
-  function threadRow(t) {
-    return '<article class="thread-card bg-surface-container-lowest border border-outline-variant rounded p-md transition">' +
-      '<div class="flex gap-3">' +
-        EF.avatarHtml(t.authorName, t.isGuest) +
-        '<div class="min-w-0 flex-1">' +
-          '<div class="flex items-start justify-between gap-2">' +
-            '<a href="thread.html?id=' + encodeURIComponent(t.id) + '" class="font-display text-title-lg text-primary-container hover:text-secondary break-words">' +
-              (t.pinned ? '<span class="material-symbols-outlined text-[18px] align-middle text-warning mr-1">push_pin</span>' : '') +
-              EF.esc(t.title) + '</a>' +
-            catBadge(t.categoryId) +
-          '</div>' +
-          '<p class="text-body-md text-on-surface-variant mt-1 line-clamp-2">' + EF.esc(t.excerpt) + '</p>' +
-          '<div class="flex items-center gap-4 mt-2 text-label-sm text-outline flex-wrap">' +
-            '<span>' + EF.esc(t.authorName) + (t.isGuest ? ' · ผู้เยี่ยมชม' : '') + '</span>' +
-            '<span>' + EF.timeAgo(t.createdAt) + '</span>' +
-            '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">chat_bubble</span>' + t.replyCount + '</span>' +
-            '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">favorite</span>' + t.likeCount + '</span>' +
-            '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]">visibility</span>' + t.views + '</span>' +
-          '</div>' +
-        '</div>' +
-      '</div>' +
-    '</article>';
+  function moveBar() {
+    var active = document.querySelector('#sort-tabs [aria-selected="true"]');
+    var bar = document.getElementById('tab-bar');
+    if (!active || !bar) return;
+    bar.style.width = active.offsetWidth + 'px';
+    bar.style.transform = 'translateX(' + (active.offsetLeft - document.getElementById('sort-tabs').scrollLeft) + 'px)';
   }
+  window.addEventListener('resize', moveBar);
+  document.getElementById('sort-tabs').addEventListener('scroll', moveBar, { passive: true });
 
-  function loadBootstrap() {
-    EF.api.get('bootstrap').then(function (r) {
-      if (!r.ok) return EF.toast(r.error, 'error');
-      if (r.config) {
-        window.EDUFORUM_CONFIG.SITE_NAME = r.config.siteName || 'EduForum';
-        window.EDUFORUM_CONFIG.SCHOOL_NAME = r.config.schoolName || '';
-        document.title = r.config.siteName + ' — ฟีดหลัก';
-        EF.renderHeader(state.sort); EF.renderFooter();
-      }
-      r.categories.forEach(function (c) { state.cats[c.id] = c; });
-
-      document.getElementById('category-list').innerHTML =
-        '<li><a href="index.html" class="flex items-center justify-between px-2 py-2 rounded hover:bg-surface-container text-label-md ' +
-        (state.category ? '' : 'bg-surface-container font-semibold') + '"><span>ทั้งหมด</span></a></li>' +
-        r.categories.map(function (c) {
-          var on = c.id === state.category ? 'bg-surface-container font-semibold' : '';
-          return '<li><a href="index.html?category=' + encodeURIComponent(c.id) + '" class="flex items-center justify-between px-2 py-2 rounded hover:bg-surface-container text-label-md ' + on + '">' +
-            '<span class="flex items-center gap-2"><span class="size-2 rounded-full" style="background:' + c.color + '"></span>' + EF.esc(c.name) + '</span>' +
-            '<span class="text-label-sm text-outline">' + c.threadCount + '</span></a></li>';
-        }).join('');
-
-      document.getElementById('trending-list').innerHTML = r.trending.length
-        ? r.trending.map(function (t, i) {
-            return '<li class="flex gap-3"><span class="font-display text-title-lg text-outline-variant w-5 shrink-0">' + (i + 1) + '</span>' +
-              '<a href="thread.html?id=' + encodeURIComponent(t.id) + '" class="hover:text-secondary text-on-surface line-clamp-2">' + EF.esc(t.title) + '</a></li>';
-          }).join('')
-        : '<li class="text-on-surface-variant text-label-md">ยังไม่มีกระทู้ เริ่มกระทู้แรกของโรงเรียนได้เลย</li>';
-
-      if (state.category && state.cats[state.category]) {
-        var f = document.getElementById('active-filter');
-        f.className = 'mb-md flex items-center gap-2';
-        f.innerHTML = '<span class="text-label-md text-on-surface-variant">กำลังดูหมวด</span>' +
-          EF.badge(state.cats[state.category].name, state.cats[state.category].color) +
-          '<a href="index.html" class="text-label-sm text-secondary hover:underline">ล้างตัวกรอง</a>';
-      }
-    }).catch(function (e) { EF.toast(e.message, 'error'); });
-  }
-
-  function loadThreads(reset) {
-    if (reset) { state.page = 1; document.getElementById('thread-list').innerHTML = '<div class="animate-pulse bg-surface-container-lowest border border-outline-variant rounded p-md h-24"></div>'; }
-    EF.api.get('threads', { page: state.page, sort: state.sort, category: state.category, q: state.q })
-      .then(function (r) {
-        if (!r.ok) return EF.toast(r.error, 'error');
-        var box = document.getElementById('thread-list');
-        var html = r.threads.map(threadRow).join('');
-        if (reset || state.page === 1) box.innerHTML = html || emptyState();
-        else box.insertAdjacentHTML('beforeend', html);
-        document.getElementById('load-more').className = r.hasMore
-          ? 'px-6 py-3 rounded-lg border border-secondary text-secondary text-label-md hover:bg-secondary-container'
-          : 'hidden';
-      }).catch(function (e) { EF.toast(e.message, 'error'); });
-  }
-
-  function emptyState() {
-    return '<div class="bg-surface-container-lowest border border-dashed border-outline-variant rounded p-xl text-center">' +
-      '<p class="text-body-lg text-on-surface mb-2">ยังไม่มีกระทู้ในมุมนี้</p>' +
-      '<p class="text-body-md text-on-surface-variant mb-md">ตั้งคำถามแรก แล้วให้เพื่อนกับคุณครูมาช่วยกันตอบ</p>' +
-      '<a href="new.html" class="inline-block px-5 py-3 rounded-lg bg-secondary text-on-secondary text-label-md">ตั้งกระทู้ใหม่</a></div>';
-  }
-
-  document.getElementById('sort').addEventListener('change', function (e) {
-    state.sort = e.target.value;
-    document.getElementById('list-title').textContent =
-      state.sort === 'popular' ? 'กระทู้ยอดนิยม' : (state.sort === 'trending' ? 'กำลังมาแรง' : 'โพสต์ล่าสุด');
+  document.getElementById('sort-tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-sort]');
+    if (!b) return;
+    state.sort = b.dataset.sort;
+    renderTabs();
+    history.replaceState({}, '', 'index.html?sort=' + state.sort + (state.category ? '&category=' + state.category : ''));
     loadThreads(true);
   });
+
+  // ---- ข้อมูลตั้งต้น ----
+  UI.bootstrap().then(function (r) {
+    if (!r.ok) return UI.toast(r.error, 'error');
+    UI.renderHeader(state.sort === 'trending' ? 'trending' : 'browse');
+    UI.renderFooter();
+    r.categories.forEach(function (c) { state.cats[c.id] = c; });
+
+    // ชิปหมวดหมู่แนวนอน
+    document.getElementById('chip-row').innerHTML =
+      chip('ทั้งหมด', '', '#444650', !state.category) +
+      r.categories.map(function (c) { return chip(c.name, c.id, c.color, c.id === state.category); }).join('');
+
+    // รายการหมวดหมู่ในแถบข้าง
+    document.getElementById('category-list').innerHTML = r.categories.map(function (c) {
+      var on = c.id === state.category ? 'bg-surface-container font-semibold' : '';
+      return '<li><a href="index.html?category=' + encodeURIComponent(c.id) + '" ' +
+        'class="flex items-center justify-between gap-2 px-3 py-3 min-h-11 rounded text-label-md hover:bg-surface-container transition-colors ' + on + '">' +
+        '<span class="flex items-center gap-2 min-w-0"><span class="size-2 rounded-full shrink-0" style="background:' + c.color + '" aria-hidden="true"></span>' +
+        '<span class="truncate">' + EF.esc(c.name) + '</span></span>' +
+        '<span class="text-label-sm text-outline shrink-0">' + c.threadCount + '</span></a></li>';
+    }).join('');
+
+    // อันดับกำลังมาแรง
+    document.getElementById('trending-list').innerHTML = r.trending.length
+      ? r.trending.map(function (t, i) {
+          return '<li class="reveal flex gap-3">' +
+            '<span class="font-display text-title-lg text-outline-variant w-5 shrink-0 text-right">' + (i + 1) + '</span>' +
+            '<a href="thread.html?id=' + encodeURIComponent(t.id) + '" class="text-on-surface hover:text-secondary line-clamp-2">' + EF.esc(t.title) + '</a></li>';
+        }).join('')
+      : '<li class="text-on-surface-variant text-label-md">ยังไม่มีกระทู้ เริ่มกระทู้แรกของโรงเรียนได้เลย</li>';
+
+    document.getElementById('stat-strip').innerHTML =
+      '<p class="text-label-sm text-inverse-primary mb-2">ความเคลื่อนไหวในบอร์ด</p>' +
+      '<div class="flex gap-lg">' +
+        '<div><p class="font-display text-headline-md">' + r.stats.threads + '</p><p class="text-label-sm text-inverse-primary">กระทู้</p></div>' +
+        '<div><p class="font-display text-headline-md">' + r.stats.replies + '</p><p class="text-label-sm text-inverse-primary">ความคิดเห็น</p></div>' +
+      '</div>';
+
+    UI.reveal();
+    loadThreads(true);
+  }).catch(function (e) {
+    document.getElementById('thread-list').innerHTML =
+      UI.emptyState('เชื่อมต่อระบบไม่ได้', e.message, 'ลองใหม่', 'index.html');
+  });
+
+  function chip(label, id, color, on) {
+    var style = on ? 'background:' + color + ';color:#fff;border-color:' + color : 'border-color:var(--c-outline-variant)';
+    return '<a href="index.html' + (id ? '?category=' + encodeURIComponent(id) : '') + '" ' +
+      'class="btn shrink-0 px-4 h-11 flex items-center rounded-lg border text-label-md whitespace-nowrap transition-colors hover:border-secondary" style="' + style + '">' +
+      EF.esc(label) + '</a>';
+  }
+
+  // ---- โหลดกระทู้ ----
+  function loadThreads(reset) {
+    var box = document.getElementById('thread-list');
+    if (reset) { state.page = 1; box.innerHTML = UI.skeletonList(4); }
+
+    EF.api.get('threads', { page: state.page, sort: state.sort, category: state.category, q: state.q })
+      .then(function (r) {
+        if (!r.ok) return UI.toast(r.error, 'error');
+        var html = r.threads.map(function (t) { return UI.threadCard(t, state.cats); }).join('');
+
+        if (reset || state.page === 1) {
+          box.innerHTML = html || UI.emptyState(
+            state.q ? 'ไม่พบกระทู้ที่ตรงกับคำค้น' : 'ยังไม่มีกระทู้ในมุมนี้',
+            state.q ? 'ลองใช้คำค้นสั้นลง หรือเลือกหมวดอื่น' : 'ตั้งคำถามแรก แล้วให้เพื่อนกับคุณครูมาช่วยกันตอบ',
+            'ตั้งกระทู้ใหม่', 'new.html');
+        } else {
+          box.insertAdjacentHTML('beforeend', html);
+        }
+        UI.reveal(box);
+
+        document.getElementById('load-more').className = r.hasMore
+          ? 'btn px-6 py-3 min-h-11 rounded-lg border border-secondary text-secondary text-label-md hover:bg-secondary-container'
+          : 'hidden';
+      }).catch(function (e) { UI.toast(e.message, 'error'); });
+  }
 
   var timer;
   document.getElementById('search').addEventListener('input', function (e) {
@@ -205,11 +210,22 @@
   });
 
   document.getElementById('load-more').addEventListener('click', function () {
-    state.page += 1; loadThreads(false);
+    var b = this;
+    b.disabled = true; b.textContent = 'กำลังโหลด…';
+    state.page += 1;
+    loadThreads(false);
+    setTimeout(function () { b.disabled = false; b.textContent = 'โหลดเพิ่มเติม'; }, 800);
   });
 
-  loadBootstrap();
-  loadThreads(true);
+  // ทางลัดคีย์บอร์ด: กด / เพื่อไปช่องค้นหา
+  document.addEventListener('keydown', function (e) {
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      document.getElementById('search').focus();
+    }
+  });
+
+  renderTabs();
 })();
 </script>
 </body>

@@ -55,7 +55,7 @@
         <ul id="category-list" class="flex flex-col gap-1"></ul>
       </div>
 
-      <div id="stat-strip" class="bg-primary text-on-primary rounded p-md"></div>
+      <div id="stat-strip" class="text-white rounded-xl p-md" style="background:linear-gradient(135deg,#e6591a,#b8480d)"></div>
     </aside>
 
     <!-- รายการกระทู้ -->
@@ -156,10 +156,10 @@
       : '<li class="text-on-surface-variant text-label-md">ยังไม่มีกระทู้ เริ่มกระทู้แรกของโรงเรียนได้เลย</li>';
 
     document.getElementById('stat-strip').innerHTML =
-      '<p class="text-label-sm text-inverse-primary mb-2">ความเคลื่อนไหวในบอร์ด</p>' +
+      '<p class="text-label-sm text-white/80 mb-2">ความเคลื่อนไหวในบอร์ด</p>' +
       '<div class="flex gap-lg">' +
-        '<div><p class="font-display text-headline-md">' + r.stats.threads + '</p><p class="text-label-sm text-inverse-primary">กระทู้</p></div>' +
-        '<div><p class="font-display text-headline-md">' + r.stats.replies + '</p><p class="text-label-sm text-inverse-primary">ความคิดเห็น</p></div>' +
+        '<div><p class="font-display text-headline-md">' + r.stats.threads + '</p><p class="text-label-sm text-white/80">กระทู้</p></div>' +
+        '<div><p class="font-display text-headline-md">' + r.stats.replies + '</p><p class="text-label-sm text-white/80">ความคิดเห็น</p></div>' +
       '</div>';
 
     UI.reveal();

@@ -4,69 +4,128 @@
    ทุกอนิเมชันขยับเฉพาะ transform กับ opacity (ไม่ขยับ width/height)
    ========================================================== */
 
-/* ---------- จานสีโหมดสว่าง (ค่าตั้งต้นจาก DESIGN.md) ---------- */
+/* ---------- โหมดสว่าง — โทนส้มอบอุ่น + กระจกใส ---------- */
 :root {
-  --c-surface: #f8f9fa;
-  --c-surface-dim: #d9dadb;
+  --c-surface: #fbf7f2;
+  --c-surface-dim: #ede4d9;
   --c-surface-lowest: #ffffff;
-  --c-surface-low: #f3f4f5;
-  --c-surface-container: #edeeef;
-  --c-surface-high: #e7e8e9;
-  --c-surface-highest: #e1e3e4;
-  --c-on-surface: #191c1d;
-  --c-on-surface-variant: #444650;
-  --c-inverse-surface: #2e3132;
-  --c-inverse-on-surface: #f0f1f2;
-  --c-outline: #6b6c78;
-  --c-outline-variant: #c5c6d2;
-  --c-primary: #00113a;
+  --c-surface-low: #fbf2e9;
+  --c-surface-container: #f6ece0;
+  --c-surface-high: #f0e4d6;
+  --c-surface-highest: #ecddcc;
+  --c-on-surface: #201a14;
+  --c-on-surface-variant: #5a4c3e;
+  --c-inverse-surface: #362f28;
+  --c-inverse-on-surface: #f9efe6;
+  --c-outline: #8a7563;
+  --c-outline-variant: #ddc9b4;
+  --c-primary: #b8480d;              /* ส้มเข้ม สีหลัก */
   --c-on-primary: #ffffff;
-  --c-primary-container: #002366;
-  --c-inverse-primary: #b3c5ff;
-  --c-link: #002366;
-  --c-secondary: #006a6a;
+  --c-primary-container: #e6591a;    /* ส้มสด ใช้กับปุ่ม/หัวเว็บ */
+  --c-inverse-primary: #ffcfa8;
+  --c-link: #b8480d;
+  --c-secondary: #c2410c;            /* ส้มอิฐ ใช้เป็นแอ็กชันรอง */
   --c-on-secondary: #ffffff;
-  --c-secondary-container: #d3f5f5;
-  --c-on-secondary-container: #00504f;
-  --c-secondary-fixed: #93f2f2;
+  --c-secondary-container: #ffe3cf;
+  --c-on-secondary-container: #8a3208;
+  --c-secondary-fixed: #ffd9bd;
   --c-error: #ba1a1a;
   --c-on-error: #ffffff;
   --c-error-container: #ffdad6;
   --c-on-error-container: #93000a;
-  --c-warning: #9a4a08;
-  --c-warning-container: #fdecd2;
+  --c-warning: #a15c00;
+  --c-warning-container: #ffe6bf;
+
+  /* กระจกใส — พื้นผิวโปร่งแสงที่วางบน backdrop-filter */
+  --glass-bg: rgba(255, 253, 250, 0.62);
+  --glass-bg-strong: rgba(255, 251, 246, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.7);
+  --glass-shadow: 0 8px 32px rgba(150, 70, 20, 0.12);
+  --glass-blur: 18px;
+  /* พื้นหลังไล่สีเบลอด้านหลังทั้งเว็บ */
+  --bg-blob-1: rgba(255, 154, 84, 0.55);
+  --bg-blob-2: rgba(255, 198, 130, 0.5);
+  --bg-blob-3: rgba(255, 120, 60, 0.32);
 }
 
-/* ---------- จานสีโหมดมืด (คุมคอนทราสต์ตัวอักษรไม่ต่ำกว่า 4.5:1) ---------- */
+/* ---------- โหมดมืด — ส้มเรืองบนพื้นน้ำตาลเข้ม (คอนทราสต์ ≥ 4.5:1) ---------- */
 .dark {
-  --c-surface: #101314;
-  --c-surface-dim: #0b0e0f;
-  --c-surface-lowest: #171a1b;
-  --c-surface-low: #1b1f20;
-  --c-surface-container: #212526;
-  --c-surface-high: #272b2c;
-  --c-surface-highest: #2e3132;
-  --c-on-surface: #e3e4e5;
-  --c-on-surface-variant: #bcc0c8;
-  --c-inverse-surface: #e3e4e5;
-  --c-inverse-on-surface: #191c1d;
-  --c-outline: #9496a1;
-  --c-outline-variant: #3b3f47;
-  --c-primary: #00113a;
-  --c-on-primary: #ffffff;
-  --c-primary-container: #2f4fa8;
-  --c-inverse-primary: #b3c5ff;
-  --c-link: #a8c0ff;
-  --c-secondary: #45b8b7;
-  --c-on-secondary: #00201f;
-  --c-secondary-container: #123f3f;
-  --c-on-secondary-container: #93f2f2;
-  --c-secondary-fixed: #93f2f2;
+  --c-surface: #17110c;
+  --c-surface-dim: #0f0a06;
+  --c-surface-lowest: #1e1710;
+  --c-surface-low: #241b13;
+  --c-surface-container: #2a2017;
+  --c-surface-high: #31261c;
+  --c-surface-highest: #392d21;
+  --c-on-surface: #efe3d6;
+  --c-on-surface-variant: #d3c0ab;
+  --c-inverse-surface: #efe3d6;
+  --c-inverse-on-surface: #201a14;
+  --c-outline: #a68f79;
+  --c-outline-variant: #4a3d2f;
+  --c-primary: #ff8a4c;
+  --c-on-primary: #4a1c00;
+  --c-primary-container: #d85a1e;
+  --c-inverse-primary: #ff8a4c;
+  --c-link: #ffb37a;
+  --c-secondary: #ff9d5c;
+  --c-on-secondary: #4a1c00;
+  --c-secondary-container: #6b2f0e;
+  --c-on-secondary-container: #ffd9bd;
+  --c-secondary-fixed: #ffd9bd;
   --c-error: #ff6b6b;
   --c-on-error: #2b0000;
   --c-error-container: #4a1414;
   --c-warning: #f0a755;
   --c-warning-container: #3d2a10;
+
+  --glass-bg: rgba(35, 26, 18, 0.55);
+  --glass-bg-strong: rgba(40, 30, 20, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-blur: 18px;
+  --bg-blob-1: rgba(216, 90, 30, 0.4);
+  --bg-blob-2: rgba(120, 60, 20, 0.42);
+  --bg-blob-3: rgba(255, 138, 76, 0.22);
+}
+
+/* ---------- พื้นหลังไล่สีเบลอทั้งเว็บ ---------- */
+body {
+  position: relative;
+  min-height: 100vh;
+  background: var(--c-surface);
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(42rem 42rem at 12% -8%, var(--bg-blob-1), transparent 60%),
+    radial-gradient(38rem 38rem at 92% 4%, var(--bg-blob-2), transparent 62%),
+    radial-gradient(34rem 34rem at 68% 100%, var(--bg-blob-3), transparent 60%);
+  pointer-events: none;
+}
+
+/* ---------- คลาสกระจกใส ---------- */
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+.glass-strong {
+  background: var(--glass-bg-strong);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+/* เผื่อเบราว์เซอร์ที่ไม่รองรับ backdrop-filter ให้ทึบขึ้นเพื่ออ่านออก */
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .glass { background: var(--c-surface-lowest); }
+  .glass-strong { background: var(--c-surface-lowest); }
 }
 
 :root {
@@ -78,11 +137,22 @@
   --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
 }
 
+/* ---------- ให้การ์ดพื้นผิวหลักเป็นกระจกอัตโนมัติ ---------- */
+.bg-surface-container-lowest {
+  background: var(--glass-bg) !important;
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.4);
+  border-color: var(--glass-border) !important;
+}
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .bg-surface-container-lowest { background: var(--c-surface-lowest) !important; }
+}
+
 /* ---------- โฟกัสต้องมองเห็นเสมอ (คีย์บอร์ด) ---------- */
 :focus-visible {
   outline: 2px solid var(--c-secondary);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 /* ---------- เข้าหน้าเว็บ ---------- */

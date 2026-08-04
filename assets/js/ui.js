@@ -43,7 +43,7 @@
     wrap.className = 'fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4';
     wrap.innerHTML =
       '<div class="modal-backdrop absolute inset-0 bg-black/40" data-close></div>' +
-      '<div class="modal-panel relative w-full max-w-lg bg-surface-container-lowest border border-outline-variant rounded-xl p-lg max-h-[85vh] overflow-y-auto"' +
+      '<div class="modal-panel glass-strong relative w-full max-w-lg rounded-2xl p-lg max-h-[85vh] overflow-y-auto"' +
       ' role="dialog" aria-modal="true" aria-label="' + EF.esc(opts.title || 'หน้าต่าง') + '">' +
         '<div class="flex items-start justify-between gap-3 mb-md">' +
           '<h2 class="font-display text-title-lg text-on-surface">' + EF.esc(opts.title || '') + '</h2>' +
@@ -234,31 +234,31 @@
     ];
     var nav = navItems.map(function (n) {
       var on = n.key === active
-        ? 'text-white border-secondary-fixed'
-        : 'text-inverse-primary hover:text-white border-transparent';
+        ? 'text-primary border-primary'
+        : 'text-on-surface-variant hover:text-primary border-transparent';
       return '<a href="' + n.href + '" class="' + on + ' border-b-2 pb-1 text-label-md transition-colors">' + n.label + '</a>';
     }).join('');
 
     var right = u
       ? '<div class="flex items-center gap-1 sm:gap-2">' +
-          '<button id="btn-bell" class="btn relative size-11 rounded-lg flex items-center justify-center text-inverse-primary hover:text-white hover:bg-white/10" aria-label="การแจ้งเตือน">' +
+          '<button id="btn-bell" class="btn relative size-11 rounded-lg flex items-center justify-center text-on-surface-variant hover:text-primary hover:bg-primary/10" aria-label="การแจ้งเตือน">' +
             '<span class="material-symbols-outlined">notifications</span>' +
             '<span id="bell-dot" class="hidden absolute inset-0 dot-pulse"></span>' +
           '</button>' +
-          '<a href="profile.html" class="btn flex items-center gap-2 pl-1 pr-2 py-1 rounded-lg hover:bg-white/10" aria-label="โปรไฟล์ของฉัน">' +
+          '<a href="profile.html" class="btn flex items-center gap-2 pl-1 pr-2 py-1 rounded-full hover:bg-primary/10" aria-label="โปรไฟล์ของฉัน">' +
             EF.avatar(u, 'sm') +
-            '<span class="hidden sm:inline text-label-md text-white max-w-28 truncate">' + EF.esc(u.displayName) + '</span>' +
+            '<span class="hidden sm:inline text-label-md text-on-surface max-w-28 truncate">' + EF.esc(u.displayName) + '</span>' +
           '</a>' +
-          (EF.Auth.isAdmin() ? '<a href="admin.html" class="hidden sm:inline text-label-md text-inverse-primary hover:text-white px-2">แผงผู้ดูแล</a>' : '') +
+          (EF.Auth.isAdmin() ? '<a href="admin.html" class="hidden sm:inline text-label-md text-on-surface-variant hover:text-primary px-2">แผงผู้ดูแล</a>' : '') +
         '</div>'
-      : '<a href="login.html" class="btn bg-secondary text-on-secondary px-4 h-11 rounded-lg text-label-md flex items-center hover:opacity-90">เข้าสู่ระบบ</a>';
+      : '<a href="login.html" class="btn bg-primary-container text-on-primary px-4 h-11 rounded-full text-label-md flex items-center hover:opacity-90">เข้าสู่ระบบ</a>';
 
     el.innerHTML =
-      '<header class="bg-primary text-on-primary sticky top-0 z-40">' +
+      '<header class="glass-strong text-on-surface sticky top-0 z-40 border-x-0 border-t-0">' +
         '<div class="max-w-container mx-auto px-5 h-16 flex items-center justify-between gap-3">' +
           '<a href="index.html" class="flex items-center gap-2 shrink-0">' +
-            '<span class="size-8 rounded bg-secondary flex items-center justify-center font-display font-bold text-on-secondary" aria-hidden="true">E</span>' +
-            '<span class="font-display text-title-lg text-white">' + EF.esc(siteName) + '</span>' +
+            '<span class="size-8 rounded-lg bg-primary-container flex items-center justify-center font-display font-bold text-on-primary" aria-hidden="true">E</span>' +
+            '<span class="font-display text-title-lg text-on-surface">' + EF.esc(siteName) + '</span>' +
           '</a>' +
           '<nav class="hidden md:flex items-center gap-6" aria-label="เมนูหลัก">' + nav + '</nav>' +
           right +
@@ -266,7 +266,7 @@
         '<div id="announce-bar"></div>' +
       '</header>' +
       // แถบล่างสำหรับจอเล็ก จำกัดไม่เกิน 5 ปุ่มตามหลักการนำทาง
-      '<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 bg-surface-container-lowest border-t border-outline-variant flex" aria-label="เมนูล่าง">' +
+      '<nav class="md:hidden fixed bottom-0 inset-x-0 z-40 glass-strong border-x-0 border-b-0 flex" aria-label="เมนูล่าง">' +
         mobileTab('index.html', 'home', 'หน้าแรก', active === 'browse') +
         mobileTab('index.html?sort=trending', 'local_fire_department', 'มาแรง', active === 'trending') +
         mobileTab('new.html', 'add_circle', 'ตั้งกระทู้', active === 'new') +

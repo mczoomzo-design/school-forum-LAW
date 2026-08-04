@@ -51,10 +51,10 @@ tailwind.config = {
         'label-md': ['14px', { lineHeight: '20px', letterSpacing: '0.01em', fontWeight: '500' }],
         'label-sm': ['12px', { lineHeight: '16px', letterSpacing: '0.04em', fontWeight: '500' }]
       },
-      borderRadius: { DEFAULT: '0.25rem', md: '0.375rem', lg: '0.5rem', xl: '0.75rem' },
+      borderRadius: { DEFAULT: '0.5rem', md: '0.625rem', lg: '0.875rem', xl: '1.25rem', '2xl': '1.75rem' },
       spacing: { xs: '4px', sm: '8px', md: '16px', lg: '24px', xl: '40px' },
       maxWidth: { container: '1120px' },
-      boxShadow: { hover: '0 4px 12px rgba(0,35,102,0.08)' }
+      boxShadow: { hover: '0 10px 30px rgba(184,72,13,0.14)' }
     }
   }
 };

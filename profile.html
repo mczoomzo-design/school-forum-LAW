@@ -77,7 +77,7 @@
     var restricted = u.suspended ? EF.badge('ถูกระงับการโพสต์', '#ba1a1a') : '';
     document.getElementById('profile-head').innerHTML =
       '<div class="bg-surface-container-lowest border border-outline-variant rounded overflow-hidden">' +
-        '<div class="h-24 bg-primary"></div>' +
+        '<div class="h-24" style="background:linear-gradient(135deg,#e6591a,#b8480d)"></div>' +
         '<div class="px-lg pb-lg -mt-12">' +
           '<div class="flex items-end justify-between gap-3 flex-wrap">' +
             '<div class="ring-4 ring-surface-container-lowest rounded-full">' + EF.avatar(u, 'xl') + '</div>' +
@@ -90,7 +90,7 @@
             EF.roleBadge(u.role) + restricted +
           '</div>' +
           '<p class="text-label-md text-outline">@' + EF.esc(u.username) + ' · เข้าร่วมเมื่อ ' + EF.fullDate(u.createdAt) + '</p>' +
-          (u.bio ? '<p class="text-body-md text-on-surface mt-3 break-words">' + EF.esc(u.bio) + '</p>' : '') +
+          (u.bio && String(u.bio).indexOf('data:image') !== 0 ? '<p class="text-body-md text-on-surface mt-3 break-words">' + EF.esc(u.bio) + '</p>' : '') +
           '<div class="flex gap-lg mt-md pt-md border-t border-outline-variant">' +
             statCell(stats.threads, 'กระทู้') + statCell(stats.replies, 'ความคิดเห็น') + statCell(stats.likes, 'ถูกใจที่ได้รับ') +
           '</div>' +
@@ -359,25 +359,40 @@
     });
   }
 
-  // ---- ย่อรูปด้วย canvas ก่อนส่ง ให้ base64 เล็กพอเก็บในเซลล์ชีต ----
+  // ---- ย่อรูปด้วย canvas ให้ base64 เล็กพอเก็บในเซลล์ชีต (เพดาน 44000 ตัวอักษร) ----
+  // ครอบเป็นสี่เหลี่ยมจัตุรัสก่อน แล้วไล่ลดคุณภาพ/ขนาดจนกว่าจะเข้าเพดาน
   function resizeImage(file, maxSize, cb) {
+    var LIMIT = 44000;
     var reader = new FileReader();
     reader.onload = function (ev) {
       var img = new Image();
       img.onload = function () {
-        var scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-        var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-        var canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        var ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        var out = canvas.toDataURL('image/jpeg', 0.82);
-        if (out.length > 45000) out = canvas.toDataURL('image/jpeg', 0.62);
+        // ครอบตรงกลางเป็นจัตุรัส รูปโปรไฟล์เป็นวงกลมอยู่แล้ว
+        var side = Math.min(img.width, img.height);
+        var sx = (img.width - side) / 2, sy = (img.height - side) / 2;
+
+        function render(size, quality) {
+          var canvas = document.createElement('canvas');
+          canvas.width = size; canvas.height = size;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+          return canvas.toDataURL('image/jpeg', quality);
+        }
+
+        var size = maxSize, quality = 0.85, out = render(size, quality), guard = 0;
+        // ลดคุณภาพก่อน ถ้ายังไม่พอค่อยลดขนาด
+        while (out.length > LIMIT && guard++ < 12) {
+          if (quality > 0.4) quality -= 0.12;
+          else { size = Math.round(size * 0.85); quality = 0.7; }
+          out = render(size, quality);
+        }
+        if (out.length > LIMIT) { UI.toast('รูปนี้ย่อแล้วยังใหญ่เกินไป ลองรูปอื่น', 'warn'); return; }
         cb(out);
       };
       img.onerror = function () { UI.toast('เปิดรูปไม่สำเร็จ ลองไฟล์อื่น', 'error'); };
       img.src = ev.target.result;
     };
+    reader.onerror = function () { UI.toast('อ่านไฟล์ไม่สำเร็จ', 'error'); };
     reader.readAsDataURL(file);
   }
 })();

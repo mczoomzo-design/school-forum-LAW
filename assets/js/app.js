@@ -124,10 +124,10 @@
   // ---------- รูปโปรไฟล์ ----------
   // เก็บได้ 3 แบบ: '' (ตัวอักษรย่อ), 'p:N' (ชุดสำเร็จรูป), 'data:image/...' (รูปที่ผู้ใช้อัปเอง)
   var PRESETS = [
-    ['#002366', '#4a6fd4'], ['#006a6a', '#3fb3b3'], ['#7c3aed', '#a97bf5'],
-    ['#b45309', '#e39237'], ['#0f766e', '#4bb5ab'], ['#9d174d', '#d6608f'],
-    ['#1e40af', '#5b82e8'], ['#166534', '#4fa96e'], ['#7e22ce', '#ab5be0'],
-    ['#a16207', '#d0a03c'], ['#0e7490', '#43a8c2'], ['#be123c', '#e4587a']
+    ['#e6591a', '#ff8a4c'], ['#b8480d', '#e6591a'], ['#c2410c', '#f97316'],
+    ['#d97706', '#fbbf24'], ['#9a3412', '#ea6a2b'], ['#be123c', '#f4708c'],
+    ['#a16207', '#e0b13c'], ['#dc2626', '#f97362'], ['#7c2d12', '#c2703c'],
+    ['#ea580c', '#ffb37a'], ['#92400e', '#d98a3c'], ['#b45309', '#f0a94c']
   ];
 
   function presetCount() { return PRESETS.length; }
@@ -152,7 +152,7 @@
     var isGuest = user && (user.isGuest === true);
     var ring = (user && (user.role === 'admin' || user.role === 'teacher' ||
                          user.authorRole === 'admin' || user.authorRole === 'teacher'))
-      ? 'box-shadow:0 0 0 2px #002366;' : '';
+      ? 'box-shadow:0 0 0 2px #e6591a;' : '';
 
     var style = 'width:' + px + 'px;height:' + px + 'px;font-size:' + font + 'px;' + ring;
     var cls = 'inline-flex items-center justify-center rounded-full shrink-0 font-display font-bold overflow-hidden select-none';
@@ -163,7 +163,7 @@
     if (String(src).indexOf('p:') === 0) {
       return '<span class="' + cls + ' text-white" style="' + style + 'background:' + presetGradient(src.slice(2)) + '" aria-label="' + esc(name) + '">' + esc(initial(name)) + '</span>';
     }
-    var bg = isGuest ? 'background:#e1e3e4;color:#444650;' : 'background:linear-gradient(135deg,#002366,#4a6fd4);color:#fff;';
+    var bg = isGuest ? 'background:#ecddcc;color:#5a4c3e;' : 'background:linear-gradient(135deg,#e6591a,#b8480d);color:#fff;';
     return '<span class="' + cls + '" style="' + style + bg + '" aria-label="' + esc(name) + '">' + esc(initial(name)) + '</span>';
   }
 
@@ -174,7 +174,7 @@
 
   function roleBadge(role) {
     if (role === 'admin') return badge('ผู้ดูแล', '#ba1a1a');
-    if (role === 'teacher') return badge('ครู', '#002366');
+    if (role === 'teacher') return badge('ครู', '#b8480d');
     return '';
   }
 

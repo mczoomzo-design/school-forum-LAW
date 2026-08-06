@@ -146,6 +146,7 @@
               '<span class="sr-only">ถูกใจ</span>' + t.likeCount + '</span>' +
             '<span class="flex items-center gap-1"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">visibility</span>' +
               '<span class="sr-only">เปิดอ่าน</span>' + t.views + '</span>' +
+            (t.imageCount ? '<span class="flex items-center gap-1 text-secondary"><span class="material-symbols-outlined text-[16px]" aria-hidden="true">image</span>' + t.imageCount + '</span>' : '') +
           '</div>' +
         '</div>' +
       '</div></article>';
@@ -250,6 +251,7 @@
             '<span class="hidden sm:inline text-label-md text-on-surface max-w-28 truncate">' + EF.esc(u.displayName) + '</span>' +
           '</a>' +
           (EF.Auth.isAdmin() ? '<a href="admin.html" class="hidden sm:inline text-label-md text-on-surface-variant hover:text-primary px-2">แผงผู้ดูแล</a>' : '') +
+          '<button id="btn-header-logout" class="btn hidden sm:inline text-label-md text-on-surface-variant hover:text-error px-2" title="ออกจากระบบ">ออกจากระบบ</button>' +
         '</div>'
       : '<a href="login.html" class="btn bg-primary-container text-on-primary px-4 h-11 rounded-full text-label-md flex items-center hover:opacity-90">เข้าสู่ระบบ</a>';
 
@@ -276,6 +278,8 @@
 
     var bell = document.getElementById('btn-bell');
     if (bell) bell.addEventListener('click', openNotifications);
+    var hlo = document.getElementById('btn-header-logout');
+    if (hlo) hlo.addEventListener('click', function () { if (confirm('ออกจากระบบใช่ไหม')) EF.Auth.logout(); });
     if (u) refreshBell();
   }
 
@@ -332,6 +336,110 @@
     });
   }
 
+  // ---------- แสดงรูปในโพสต์ ----------
+  function imageGallery(urls) {
+    if (!urls || !urls.length) return '';
+    var n = urls.length;
+    var cols = n === 1 ? 'grid-cols-1' : (n === 2 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3');
+    return '<div class="grid ' + cols + ' gap-2 mt-3">' + urls.map(function (u, i) {
+      return '<button type="button" data-lightbox="' + EF.esc(u) + '" class="btn block rounded-lg overflow-hidden border border-outline-variant aspect-square bg-surface-container">' +
+        '<img src="' + EF.esc(u) + '" alt="รูปแนบที่ ' + (i + 1) + '" loading="lazy" class="w-full h-full object-cover hover:scale-105 transition-transform duration-200"></button>';
+    }).join('') + '</div>';
+  }
+
+  function lightbox(url) {
+    var wrap = document.createElement('div');
+    wrap.className = 'fixed inset-0 z-[60] flex items-center justify-center p-4 modal-backdrop bg-black/80';
+    wrap.innerHTML = '<img src="' + EF.esc(url) + '" alt="รูปขยาย" class="max-w-full max-h-[90vh] rounded-lg modal-panel">' +
+      '<button class="btn absolute top-4 right-4 size-11 rounded-full bg-white/15 text-white flex items-center justify-center" aria-label="ปิด"><span class="material-symbols-outlined">close</span></button>';
+    wrap.addEventListener('click', function () { wrap.remove(); });
+    document.body.appendChild(wrap);
+  }
+
+  document.addEventListener('click', function (e) {
+    var lb = e.target.closest('[data-lightbox]');
+    if (lb) { e.preventDefault(); lightbox(lb.dataset.lightbox); }
+  });
+
+  // ---------- เครื่องมือแนบรูป (ใช้ในหน้าตั้งกระทู้และตอบกระทู้) ----------
+  // คืน object { getUrls(), reset(), count() } และแสดง UI ในกล่อง target
+  function imageUploader(target, max) {
+    max = max || 4;
+    var urls = [];   // ลิงก์รูปที่อัปเสร็จแล้ว
+    target.innerHTML =
+      '<div class="flex items-center gap-2 flex-wrap">' +
+        '<label class="up-btn btn inline-flex items-center gap-2 px-4 py-2.5 min-h-11 rounded-lg border border-outline-variant text-label-md cursor-pointer hover:border-secondary w-fit">' +
+          '<span class="material-symbols-outlined text-[18px]">image</span> แนบรูป' +
+          '<input type="file" accept="image/*" multiple class="hidden"></label>' +
+        '<span class="up-count text-label-sm text-outline"></span>' +
+      '</div>' +
+      '<div class="up-grid grid grid-cols-3 sm:grid-cols-4 gap-2 mt-2"></div>';
+
+    var input = target.querySelector('input[type=file]');
+    var grid = target.querySelector('.up-grid');
+    var countEl = target.querySelector('.up-count');
+
+    function refresh() {
+      countEl.textContent = urls.length ? (urls.length + '/' + max + ' รูป') : '';
+      target.querySelector('.up-btn').style.display = urls.length >= max ? 'none' : '';
+    }
+
+    input.addEventListener('change', function (e) {
+      var files = Array.prototype.slice.call(e.target.files || []);
+      input.value = '';
+      files.forEach(function (file) {
+        if (urls.length >= max) { toast('แนบได้สูงสุด ' + max + ' รูป', 'warn'); return; }
+        if (!/^image\//.test(file.type)) return;
+        if (file.size > 8 * 1024 * 1024) { toast('รูปใหญ่เกิน 8MB', 'warn'); return; }
+        addPlaceholder(file);
+      });
+    });
+
+    function addPlaceholder(file) {
+      var slot = document.createElement('div');
+      slot.className = 'relative rounded-lg overflow-hidden border border-outline-variant aspect-square bg-surface-container';
+      slot.innerHTML = '<div class="skeleton absolute inset-0"></div>';
+      grid.appendChild(slot);
+
+      resizeForUpload(file, 1280, function (dataUrl) {
+        EF.api.post('uploadImage', { image: dataUrl }).then(function (r) {
+          if (!r.ok) { slot.remove(); toast(r.error, 'error'); return; }
+          urls.push(r.url);
+          slot.innerHTML = '<img src="' + r.url + '" class="w-full h-full object-cover" alt="">' +
+            '<button type="button" class="up-remove btn absolute top-1 right-1 size-7 rounded-full bg-black/60 text-white flex items-center justify-center" aria-label="ลบรูป"><span class="material-symbols-outlined text-[16px]">close</span></button>';
+          slot.querySelector('.up-remove').addEventListener('click', function () {
+            urls = urls.filter(function (x) { return x !== r.url; });
+            slot.remove(); refresh();
+          });
+          refresh();
+        }).catch(function (err) { slot.remove(); toast(err.message, 'error'); });
+      }, function () { slot.remove(); });
+    }
+
+    refresh();
+    return { getUrls: function () { return urls.slice(); }, count: function () { return urls.length; }, reset: function () { urls = []; grid.innerHTML = ''; refresh(); } };
+  }
+
+  // ย่อรูปก่อนอัป: ด้านยาวไม่เกิน maxSize, JPEG คุณภาพ 0.82
+  function resizeForUpload(file, maxSize, cb, onErr) {
+    var reader = new FileReader();
+    reader.onload = function (ev) {
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+        var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        var canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        cb(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = function () { toast('เปิดรูปไม่สำเร็จ', 'error'); if (onErr) onErr(); };
+      img.src = ev.target.result;
+    };
+    reader.onerror = function () { if (onErr) onErr(); };
+    reader.readAsDataURL(file);
+  }
+
   // ---------- ประกาศจากผู้ดูแล ----------
   function showBanner(text, tone) {
     var bar = document.getElementById('announce-bar');
@@ -380,6 +488,7 @@
     reveal: reveal, skeletonList: skeletonList,
     threadCard: threadCard, emptyState: emptyState,
     reportDialog: reportDialog, readProgress: readProgress,
+    imageGallery: imageGallery, imageUploader: imageUploader, lightbox: lightbox,
     renderHeader: renderHeader, renderFooter: renderFooter,
     bootstrap: bootstrap, showBanner: showBanner, refreshBell: refreshBell
   };

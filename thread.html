@@ -39,6 +39,7 @@
     <label for="reply-body" class="sr-only">ความคิดเห็นของคุณ</label>
     <textarea id="reply-body" rows="4" placeholder="พิมพ์ความคิดเห็นของคุณ ใช้ถ้อยคำสุภาพและให้เกียรติกัน"
               class="w-full p-3 rounded border border-outline-variant bg-surface text-body-md focus:border-secondary focus:outline-none"></textarea>
+    <div id="reply-image-block" class="hidden mt-2"><div id="reply-image-uploader"></div></div>
     <div class="flex items-center justify-between mt-3 gap-3 flex-wrap">
       <p id="composer-note" class="text-label-sm text-outline"></p>
       <button id="btn-reply" class="btn px-5 py-3 min-h-11 rounded-lg bg-primary-container text-on-primary text-label-md hover:opacity-90 disabled:opacity-50">
@@ -110,6 +111,7 @@
           (t.authorUsername ? '<button data-report-user="' + EF.esc(t.authorUsername) + '" class="btn ml-auto min-h-11 px-3 rounded-lg text-label-sm text-on-surface-variant hover:text-error hover:bg-surface-container">รายงานผู้ใช้</button>' : '') +
         '</div>' +
         '<div class="text-body-lg leading-8 text-on-surface break-words">' + EF.textToHtml(t.body) + '</div>' +
+        UI.imageGallery(t.images) +
         '<div class="flex items-center gap-2 mt-lg pt-md border-t border-outline-variant flex-wrap">' +
           actionBtn('like', 'favorite', t.likeCount + ' ถูกใจ', 'thread', t.id) +
           '<button id="btn-bookmark" class="btn flex items-center gap-2 px-4 min-h-11 rounded-lg border border-outline-variant text-label-md hover:border-secondary ' +
@@ -147,6 +149,7 @@
               '<span class="text-label-sm text-outline ml-auto">ความเห็นที่ ' + (i + 1) + '</span>' +
             '</div>' +
             '<div class="text-body-md text-on-surface mt-2 break-words">' + EF.textToHtml(r.body) + '</div>' +
+            UI.imageGallery(r.images) +
             '<div class="flex items-center gap-1 mt-2 flex-wrap">' +
               '<button data-like="reply" data-id="' + r.id + '" class="btn flex items-center gap-1 px-3 min-h-11 rounded-lg text-label-sm text-on-surface-variant hover:text-secondary">' +
                 '<span class="material-symbols-outlined text-[16px]" aria-hidden="true">favorite</span><span class="like-count">' + r.likeCount + '</span>' +
@@ -219,6 +222,7 @@
   });
 
   // ---- กล่องตอบ ----
+  var replyUploader = null;
   function setupComposer(r) {
     if (!r || !r.ok) return;
     var note = document.getElementById('composer-note');
@@ -230,6 +234,11 @@
     } else {
       document.getElementById('composer').innerHTML =
         '<p class="text-body-md text-center py-3">ต้องเข้าสู่ระบบก่อนจึงจะตอบกระทู้ได้ <a href="login.html" class="text-secondary underline">เข้าสู่ระบบ</a></p>';
+      return;
+    }
+    if (r.config.allowImages && document.getElementById('reply-image-block')) {
+      document.getElementById('reply-image-block').classList.remove('hidden');
+      replyUploader = UI.imageUploader(document.getElementById('reply-image-uploader'), r.config.maxImagesPerPost || 4);
     }
   }
 
@@ -237,16 +246,18 @@
   btn.addEventListener('click', function () {
     var ta = document.getElementById('reply-body');
     var body = ta.value.trim();
-    if (body.length < 2) { UI.toast('พิมพ์ข้อความก่อนส่ง', 'warn'); ta.focus(); return; }
+    var images = replyUploader ? replyUploader.getUrls() : [];
+    if (body.length < 2 && !images.length) { UI.toast('พิมพ์ข้อความหรือแนบรูปก่อนส่ง', 'warn'); ta.focus(); return; }
 
     btn.disabled = true; btn.textContent = 'กำลังส่ง…';
     EF.api.post('createReply', {
-      threadId: id, body: body,
+      threadId: id, body: body, images: images,
       guestName: (document.getElementById('guest-name') || {}).value || ''
     }).then(function (r) {
       btn.disabled = false; btn.textContent = 'ส่งความคิดเห็น';
       if (!r.ok) return UI.toast(r.error, 'error');
       ta.value = '';
+      if (replyUploader) replyUploader.reset();
       UI.toast(r.pending ? 'ส่งแล้ว รอผู้ดูแลอนุมัติ' : 'ส่งความคิดเห็นแล้ว', 'success');
       if (!r.pending) load();
     }).catch(function (e) {

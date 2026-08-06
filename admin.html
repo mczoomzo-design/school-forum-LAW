@@ -465,7 +465,7 @@
     body.innerHTML = '<h2 class="font-display text-title-lg mb-md">ตั้งค่าระบบ</h2><div id="cfg-list" class="flex flex-col gap-3 max-w-2xl">' + UI.skeletonList(3) + '</div>';
     EF.api.post('admin.config', { mode: 'list' }).then(function (r) {
       if (!r.ok) return UI.toast(r.error, 'error');
-      var bools = ['allowGuestThread', 'allowGuestReply', 'guestNeedsApproval', 'allowRegister'];
+      var bools = ['allowGuestThread', 'allowGuestReply', 'guestNeedsApproval', 'allowRegister', 'allowImages'];
       document.getElementById('cfg-list').innerHTML = r.config.map(function (c) {
         var control = bools.indexOf(c.key) !== -1
           ? '<label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" data-cfg="' + EF.esc(c.key) + '" ' + (String(c.value) === 'true' ? 'checked' : '') + ' class="size-5 accent-[#006a6a]"></label>'

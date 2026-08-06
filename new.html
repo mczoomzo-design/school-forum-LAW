@@ -61,6 +61,11 @@
       <div id="tag-preview" class="flex gap-2 mt-2 flex-wrap"></div>
     </div>
 
+    <div id="image-block" class="hidden">
+      <span class="block text-label-md text-on-surface-variant mb-1">รูปภาพ</span>
+      <div id="image-uploader"></div>
+    </div>
+
     <div class="bg-surface-container-low rounded p-md text-label-md text-on-surface-variant">
       <p class="font-semibold text-on-surface mb-1">ก่อนเผยแพร่</p>
       <p>ใช้ถ้อยคำสุภาพ ไม่พาดพิงบุคคลในทางเสียหาย และไม่เปิดเผยข้อมูลส่วนตัวของผู้อื่น เช่น เลขประจำตัวประชาชน เบอร์โทร หรือที่อยู่</p>
@@ -119,9 +124,16 @@
     UI.toast('ล้างร่างแล้ว');
   });
 
+  var uploader = null;
+
   UI.bootstrap().then(function (r) {
     if (!r.ok) return UI.toast(r.error, 'error');
     UI.renderHeader('new'); UI.renderFooter();
+
+    if (r.config.allowImages) {
+      document.getElementById('image-block').classList.remove('hidden');
+      uploader = UI.imageUploader(document.getElementById('image-uploader'), r.config.maxImagesPerPost || 4);
+    }
 
     document.getElementById('cat-picker').innerHTML = r.categories.map(function (c) {
       return '<button type="button" data-cat="' + c.id + '" ' +
@@ -160,13 +172,14 @@
   var btn = document.getElementById('btn-post');
   btn.addEventListener('click', function () {
     var title = elTitle.value.trim(), body = elBody.value.trim();
+    var images = uploader ? uploader.getUrls() : [];
     if (title.length < 5) { UI.toast('หัวข้อสั้นเกินไป ใส่อย่างน้อย 5 ตัวอักษร', 'warn'); elTitle.focus(); return; }
     if (!chosen) { UI.toast('เลือกหมวดหมู่ก่อนเผยแพร่', 'warn'); return; }
-    if (body.length < 10) { UI.toast('เนื้อหาสั้นเกินไป ใส่อย่างน้อย 10 ตัวอักษร', 'warn'); elBody.focus(); return; }
+    if (body.length < 10 && !images.length) { UI.toast('ใส่เนื้อหาอย่างน้อย 10 ตัวอักษร หรือแนบรูป', 'warn'); elBody.focus(); return; }
 
     btn.disabled = true; btn.textContent = 'กำลังเผยแพร่…';
     EF.api.post('createThread', {
-      title: title, body: body, categoryId: chosen, tags: elTags.value,
+      title: title, body: body, categoryId: chosen, tags: elTags.value, images: images,
       guestName: (document.getElementById('guest-name') || {}).value || ''
     }).then(function (r) {
       if (!r.ok) { btn.disabled = false; btn.textContent = 'เผยแพร่กระทู้'; return UI.toast(r.error, 'error'); }
